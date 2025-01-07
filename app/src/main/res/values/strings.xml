@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">WordCoach</string>
+    <string name="share_results">Share word coach results</string>
 </resources>

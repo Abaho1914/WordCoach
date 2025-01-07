@@ -1,5 +1,6 @@
 package com.abahoabbott.wordcoach.features.game
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,84 +8,135 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.abahoabbott.wordcoach.R
 import com.abahoabbott.wordcoach.common.WordCoachOptionsButton
+import com.abahoabbott.wordcoach.data.GameUiState
+import com.abahoabbott.wordcoach.nav.NavEvent
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 import com.abahoabbott.wordcoach.ui.theme.correctAnswerColor
 
-
-data class GameUiState(
-    val question: String = "",
-    val options: List<GameOption> = emptyList(),
-    val score: Int = 0,
-    val progress: Float = 0f,
-    val isLoading: Boolean = false,
-    val selectedOptionId: Int? = null
-)
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameScreen(
-    modifier: Modifier = Modifier,
-    viewModel: GameViewModel = viewModel()
+internal fun GameScreen(
+    viewModel: GameViewModel = viewModel(),
+    navigateToResultsScreen: (GameResult) -> Unit = {}
 ) {
-    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is NavEvent.NavigateToResultsScreen -> {
+                    navigateToResultsScreen(
+                        event.gameResult
+                    )
+                }
+
+                is NavEvent.ShowNavError -> {
+                    Log.i("Sunflower:Game Screen", event.message)
+                }
+            }
+        }
+    }
+
+
 
     GameScreenContent(
-        modifier = modifier,
-        uiState = uiState,
-        onOptionSelected = viewModel::onOptionSelected,
-        onSkip = viewModel::onSkip
+        newUiState = uiState,
+        onOptionSelected = { id, isCorrect -> viewModel.onOptionSelected(id, isCorrect) },
+        onSkip = { viewModel.onSkip() },
+        progress = uiState.progress
     )
 }
 
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameScreenContent(
+private fun GameScreenContent(
     modifier: Modifier = Modifier,
-    uiState: GameUiState,
-    onOptionSelected: (Int) -> Unit,
-    onSkip: () -> Unit
+    newUiState: GameUiState = GameUiState(),
+    onOptionSelected: (optionId: Int, isCorrect: Boolean) -> Unit,
+    onSkip: () -> Unit,
+    progress: Float = 0.0f
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        GameScreenAppBar(score = uiState.score)
-        GameLayout(
-            question = uiState.question,
-            options = uiState.options,
-            selectedOptionId = uiState.selectedOptionId,
-            onOptionSelected = onOptionSelected
-        )
-        GameProgressBar(
-            progress = uiState.progress,
-            onSkip = onSkip
-        )
-    }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        //   verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        ) {
+                            Text("Score: ")
+                            Text(
+                                text = "${newUiState.score}",
+                                color = Color(0xFF4CAF50)
+                            )
+                        }
+                    }
 
+
+                },
+
+                )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            GameLayout(
+                question = newUiState.currentQuestion,
+                selectedOptionId = newUiState.selectedOptionId,
+                onOptionSelected = onOptionSelected
+            )
+            GameProgressBar(
+                progress = progress,
+                onSkip = onSkip
+            )
+        }
+    }
 }
 
-class GameOption(
-    val id: Int,
-    val text: String,
-    val isCorrect: Boolean
-)
 
 @Composable
 private fun GameProgressBar(
@@ -92,15 +144,18 @@ private fun GameProgressBar(
     onSkip: () -> Unit = {},
     progress: Float,
 ) {
+
+
     Row(
         modifier = modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         LinearProgressIndicator(
-            progress = progress,
-            modifier = modifier.weight(1f)
+            progress = { progress },
+            modifier = modifier.weight(1f),
         )
         TextButton(
             onClick = {
@@ -117,12 +172,11 @@ private fun GameProgressBar(
 }
 
 @Composable
-fun GameLayout(
+private fun GameLayout(
     modifier: Modifier = Modifier,
-    question: String,
-    options: List<GameOption>,
+    question: WordQuestion,
     selectedOptionId: Int?,
-    onOptionSelected: (Int) -> Unit,
+    onOptionSelected: (optionId: Int, isCorrect: Boolean) -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -130,8 +184,10 @@ fun GameLayout(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        val options = question.options
         Text(
-            text = question,
+            modifier = Modifier.padding(vertical = 4.dp),
+            text = question.question,
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center
         )
@@ -146,31 +202,13 @@ fun GameLayout(
             WordCoachOptionsButton(
                 answerOption = option.text,
                 isAnswerCorrect = option.isCorrect,
-                isSelected = selectedOptionId == option.id,
-                onClickButton = { onOptionSelected(option.id) }
+                isSelected = selectedOptionId == option.optionId,
+                onClickButton = {
+                    onOptionSelected(option.optionId, option.isCorrect)
+                }
             )
         }
 
-    }
-}
-
-@Composable
-fun GameScreenAppBar(
-    score: Int,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-
-    ) {
-        Text(
-            "WORD COACH",
-            style = MaterialTheme.typography.titleLarge
-        )
-        GameScore(score = score)
     }
 }
 
@@ -186,8 +224,9 @@ private fun GameScore(
 
     ) {
         Text(
-            "Score:",
-            style = MaterialTheme.typography.bodyLarge
+            text = "Score:",
+            style = MaterialTheme.typography.titleMedium,
+            //    color = Color.GRAY
         )
         Text(
             text = score.toString(),
@@ -206,16 +245,10 @@ private fun GameScreenPreview() {
     WordCoachTheme {
         Surface {
             GameScreenContent(
-                uiState = GameUiState(
-                    question = "Which word is similar to move?",
-                    options = listOf(
-                        GameOption(1, "Travel", true),
-                        GameOption(2, "Stay", false)
-                    ),
-                    score = 120,
-                    progress = 0.7f
+                newUiState = GameUiState(
+                    currentQuestion = allQuestions[5]
                 ),
-                onOptionSelected = {},
+                onOptionSelected = { _, _ -> },
                 onSkip = {}
             )
 

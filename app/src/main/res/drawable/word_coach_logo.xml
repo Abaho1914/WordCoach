@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
+
+    <!-- Background circle -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M50,5 A45,45 0 1,1 49.9999,95 A45,45 0 1,1 50,5" />
+
     <!-- Progress ring -->
     <path
         android:strokeColor="#E0E0E0"
@@ -31,6 +36,4 @@
         android:fillColor="#FFFFFF"
         android:fillAlpha="0.9"
         android:pathData="M30,70 C40,65 60,65 70,70 L70,75 C60,70 40,70 30,75 Z" />
-
-
 </vector>

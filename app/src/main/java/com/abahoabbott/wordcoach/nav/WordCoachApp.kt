@@ -1,15 +1,47 @@
 package com.abahoabbott.wordcoach.nav
 
+import android.util.Log
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import com.abahoabbott.wordcoach.features.game.GameScreen
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import com.abahoabbott.wordcoach.features.game.nav.AppDestination
+import com.abahoabbott.wordcoach.features.game.nav.gameDestination
+import com.abahoabbott.wordcoach.features.game.nav.navigateToResultsScreen
+import com.abahoabbott.wordcoach.features.results.nav.navigateToGameDestination
+import com.abahoabbott.wordcoach.features.results.nav.resultsDestination
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 
 @Composable
-fun WordCoachApp(){
-    WordCoachTheme {
-        Surface {
-            GameScreen()
+fun WordCoachApp() {
+    WordCoachTheme(
+        dynamicColor = false
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.background
+        ) {
+
+            val navController = rememberNavController()
+            NavHost(
+                navController = navController,
+                startDestination = AppDestination.GameDestination.route
+            ) {
+                1
+
+                gameDestination(
+                    onNavigateToResultsScreen = { gameResult ->
+                        Log.i("Sunflower:Nav", gameResult.toString())
+                        navController.navigateToResultsScreen(
+                            gameResult
+                        )
+                    }
+                )
+                resultsDestination(
+                    navigateToGameScreen = { navController.navigateToGameDestination() }
+                )
+
+            }
         }
     }
 }
