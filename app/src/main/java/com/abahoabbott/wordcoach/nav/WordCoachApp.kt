@@ -11,6 +11,7 @@ import com.abahoabbott.wordcoach.features.game.nav.gameDestination
 import com.abahoabbott.wordcoach.features.game.nav.navigateToResultsScreen
 import com.abahoabbott.wordcoach.features.results.nav.navigateToGameDestination
 import com.abahoabbott.wordcoach.features.results.nav.resultsDestination
+import com.abahoabbott.wordcoach.features.splash.nav.splashDestination
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 
 @Composable
@@ -25,9 +26,11 @@ fun WordCoachApp() {
             val navController = rememberNavController()
             NavHost(
                 navController = navController,
-                startDestination = AppDestination.GameDestination.route
+                startDestination = AppDestination.Splash.route
             ) {
-                1
+                splashDestination {
+                    navController.navigateToGameDestination()
+                }
 
                 gameDestination(
                     onNavigateToResultsScreen = { gameResult ->

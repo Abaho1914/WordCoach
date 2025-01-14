@@ -48,7 +48,6 @@ fun WordCoachOptionsButton(
             .padding(8.dp),
         shape = MaterialTheme.shapes.small,
         colors = buttonColors,
-       // enabled = !isAnswerCorrect
     ) {
 
         ButtonContent(

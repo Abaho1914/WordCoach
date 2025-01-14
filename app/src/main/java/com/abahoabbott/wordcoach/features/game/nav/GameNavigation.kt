@@ -10,16 +10,21 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 fun NavController.navigateToResultsScreen(gameResult: GameResult) {
-    navigate(route = AppDestination.ResultsDestination.createRoute(gameResult = gameResult))
+    navigate(route = AppDestination.Results.createRoute(gameResult = gameResult))
 }
 
 
 //Sealed class for type safe navigation
 sealed class AppDestination(val route: String) {
-    object GameDestination : AppDestination("GameDestination")
-    object ResultsDestination : AppDestination("ResultsDestination") {
+
+    //Screens without parameters
+    object Splash: AppDestination("Splash")
+    object Game : AppDestination("Game")
+
+
+    object Results: AppDestination("Results") {
         fun createRoute(gameResult: GameResult) =
-            "ResultsDestination/${Uri.encode(Json.encodeToString(gameResult))}"
+            "Results/${Uri.encode(Json.encodeToString(gameResult))}"
     }
 
 }
@@ -27,7 +32,7 @@ sealed class AppDestination(val route: String) {
 
 fun NavGraphBuilder.gameDestination(onNavigateToResultsScreen: (GameResult) -> Unit) {
     composable(
-        route = AppDestination.GameDestination.route
+        route = AppDestination.Game.route
     ) {
         GameScreen(
             navigateToResultsScreen = {

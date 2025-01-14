@@ -7,7 +7,6 @@ import com.abahoabbott.wordcoach.features.game.WordQuestion
  */
 data class GameUiState(
     val currentQuestion: WordQuestion = WordQuestion(),
-    val currentQuestionCount: Int = 1,
     val score: Int = 0,
     val selectedOptionId: Int? = null,
     val isGameOver: Boolean = false,

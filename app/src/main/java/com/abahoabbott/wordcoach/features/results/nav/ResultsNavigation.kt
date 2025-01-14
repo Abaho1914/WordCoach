@@ -17,7 +17,7 @@ import kotlinx.serialization.json.Json
 
 
 fun NavController.navigateToGameDestination() {
-    navigate(AppDestination.GameDestination.route)
+    navigate(AppDestination.Game.route)
 
 }
 private fun shareResults(context: Context,subject: String,summary: String) {
@@ -39,7 +39,7 @@ fun NavGraphBuilder.resultsDestination(
     navigateToGameScreen: () -> Unit
 ) {
     composable(
-        route = "${AppDestination.ResultsDestination.route}/{gameResult}",
+        route = "${AppDestination.Results.route}/{gameResult}",
         arguments = listOf(
             navArgument("gameResult") {
                 type = NavType.StringType
