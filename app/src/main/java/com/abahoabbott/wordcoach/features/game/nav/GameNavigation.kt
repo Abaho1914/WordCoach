@@ -14,7 +14,14 @@ fun NavController.navigateToResultsScreen(gameResult: GameResult) {
 }
 
 
-//Sealed class for type safe navigation
+/**
+ * Sealed class representing destinations within the application.
+ *
+ * This class provides type-safe navigation by defining all possible screens
+ * as objects within the sealed class. Each destination has a unique [route]
+ * that can be used for navigation.  Destinations can also include functions
+ * to create routes with parameters.
+ */
 sealed class AppDestination(val route: String) {
 
     //Screens without parameters

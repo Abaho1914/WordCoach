@@ -16,6 +16,16 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel responsible for managing the game logic and UI state.
+ *
+ * This class handles the flow of the game, including:
+ * - Selecting questions.
+ * - Tracking user progress and score.
+ * - Updating the UI state.
+ * - Navigating to the results screen.
+ * - Resetting the game.
+ */
 class GameViewModel() : ViewModel() {
 
     //Game Ui State
