@@ -74,6 +74,8 @@ dependencies {
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation(libs.androidx.room.ktx)
 
+    implementation(libs.androidx.datastore.preferences)
+
 
     //hilt
     implementation(libs.hilt.android)
