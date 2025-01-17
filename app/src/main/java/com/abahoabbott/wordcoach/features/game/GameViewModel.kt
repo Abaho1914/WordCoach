@@ -203,9 +203,6 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
         //Max number of questions are user can attempt per game
         private const val MAX_NO_OF_QUESTIONS = 5
 
-        //Initial score for the game
-        private const val INITIAL_SCORE = 0
-
         private val SCORE_KEY = intPreferencesKey("cumulative_score")
     }
 

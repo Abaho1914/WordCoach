@@ -29,13 +29,11 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.abahoabbott.wordcoach.R
 import com.abahoabbott.wordcoach.common.WordCoachOptionsButton
 import com.abahoabbott.wordcoach.data.GameUiState
 import com.abahoabbott.wordcoach.nav.NavEvent
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
-import com.abahoabbott.wordcoach.ui.theme.correctAnswerColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -211,33 +209,6 @@ private fun GameLayout(
         }
 
     }
-}
-
-@Composable
-private fun GameScore(
-    score: Int,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-
-    ) {
-        Text(
-            text = "Score:",
-            style = MaterialTheme.typography.titleMedium,
-            //    color = Color.GRAY
-        )
-        Text(
-            text = score.toString(),
-            style =
-                MaterialTheme.typography.bodyLarge.copy(
-                    color = correctAnswerColor
-                )
-        )
-    }
-
 }
 
 @PreviewLightDark
