@@ -23,28 +23,28 @@ data class GameOption(
 val initialOptions = listOf(
     WordQuestion(
         questionId = 0,
-        question = "Which word is similar to flow",
-        options = listOf(GameOption(0, "Movement", true), GameOption(1, "Judgement", false))
+        question = "Which word is similar to happy?",
+        options = listOf(GameOption(0, "Joyful", true), GameOption(1, "Sad", false))
     ),
     WordQuestion(
         questionId = 1,
-        question = "Which word is similar to please",
-        options = listOf(GameOption(0, "Mostly", false), GameOption(1, "Kindly", true))
+        question = "Which word is opposite of start?",
+        options = listOf(GameOption(0, "Begin", false), GameOption(1, "End", true))
     ),
     WordQuestion(
         questionId = 2,
-        question = "Which word is similar to beautiful",
-        options = listOf(GameOption(0, "Negative", false), GameOption(1, "Attractive", true))
+        question = "Which word is similar to big?",
+        options = listOf(GameOption(0, "Large", true), GameOption(1, "Small", false))
     ),
     WordQuestion(
         questionId = 3,
-        question = "Which word is similar to thick",
-        options = listOf(GameOption(0, "Outside", false), GameOption(1, "Wide", true))
+        question = "Which word is opposite of hot?",
+        options = listOf(GameOption(0, "Cold", true), GameOption(1, "Warm", false))
     ),
     WordQuestion(
         questionId = 4,
-        question = "Which word is similar to palatable",
-        options = listOf(GameOption(0, "Convertible", false), GameOption(1, "Edible", true))
+        question = "Which word is similar to quick?",
+        options = listOf(GameOption(0, "Fast", true), GameOption(1, "Slow", false))
     ),
 )
 

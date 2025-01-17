@@ -1,6 +1,5 @@
 package com.abahoabbott.wordcoach.features.game
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abahoabbott.wordcoach.data.GameUiState
