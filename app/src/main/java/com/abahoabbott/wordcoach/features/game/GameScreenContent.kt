@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.abahoabbott.wordcoach.R
@@ -39,7 +40,7 @@ import com.abahoabbott.wordcoach.ui.theme.correctAnswerColor
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun GameScreen(
-    viewModel: GameViewModel = viewModel(),
+    viewModel: GameViewModel = hiltViewModel(),
     navigateToResultsScreen: (GameResult) -> Unit = {}
 ) {
 

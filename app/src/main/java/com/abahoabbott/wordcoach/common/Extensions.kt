@@ -1,5 +1,9 @@
 package com.abahoabbott.wordcoach.common
 
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import java.util.Locale
 
 fun modifyExplanationQuestion(sentence: String): String {
@@ -20,3 +24,6 @@ fun scoreBoardMessage(correctAnswers: Int): String {
     }
 
 }
+
+//Top-level extension to create DataStore
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "game_prefs")
