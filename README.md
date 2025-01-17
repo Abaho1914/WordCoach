@@ -24,8 +24,6 @@ Word Coach is a Kotlin-based Android clone of Google's popular Word Coach game. 
 
 ## Screenshots
 
-### Splash Screen
-![Splash Screen](screenshots/splash_screen.png)
 
 ### Game Screen
 ![Game Screen](GameScreen.png)
