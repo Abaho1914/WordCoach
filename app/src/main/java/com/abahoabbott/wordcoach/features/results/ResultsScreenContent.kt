@@ -1,19 +1,31 @@
 package com.abahoabbott.wordcoach.features.results
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -165,40 +177,64 @@ private fun ExplanationCard(
         modifier = Modifier
             .wrapContentSize()
             .padding(horizontal = 16.dp, vertical = 4.dp)
+
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
 
-        ) {
-            ExplanationIcon(answerState)
-            Text(
-                modifyExplanationQuestion(question),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(
-                modifier = Modifier.padding(),
-                onClick = {
-                    isExpanded = !isExpanded
-                },
             ) {
-                if (isExpanded) {
+                ExplanationIcon(answerState)
+                Text(
+                    modifyExplanationQuestion(question),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    modifier = Modifier.padding(),
+                    onClick = {
+                        isExpanded = !isExpanded
+                    },
+                ) {
                     Icon(
-                        painter = painterResource(R.drawable.baseline_keyboard_arrow_up_24),
-                        contentDescription = null
-                    )
-                } else {
-
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_keyboard_arrow_down_24),
-                        contentDescription = null
+                        painter = painterResource(
+                            if (isExpanded) {
+                                R.drawable.baseline_keyboard_arrow_up_24
+                            } else {
+                                R.drawable.baseline_keyboard_arrow_down_24
+                            }
+                        ),
+                        contentDescription = if (isExpanded) "Collapse" else "Expand"
                     )
                 }
+            }
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(
+                            end = 16.dp,
+                            bottom = 16.dp
+                        )
+                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        thickness = 1.dp,
+                        color = Color.DarkGray
+                    )
+                    ExpandedCardContent()
+                }
+
             }
         }
     }
