@@ -1,7 +1,5 @@
 package com.abahoabbott.wordcoach.features.results
 
-import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -156,6 +158,9 @@ private fun ExplanationCard(
     answerState: AnswerState = AnswerState.CORRECT,
     question: String = ""
 ) {
+
+    var isExpanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .wrapContentSize()
@@ -178,12 +183,22 @@ private fun ExplanationCard(
             )
             IconButton(
                 modifier = Modifier.padding(),
-                onClick = {},
+                onClick = {
+                    isExpanded = !isExpanded
+                },
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.baseline_keyboard_arrow_down_24),
-                    contentDescription = null
-                )
+                if (isExpanded) {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_keyboard_arrow_up_24),
+                        contentDescription = null
+                    )
+                } else {
+
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_keyboard_arrow_down_24),
+                        contentDescription = null
+                    )
+                }
             }
         }
     }
@@ -239,7 +254,36 @@ private fun ResultsScreenPreview() {
     WordCoachTheme {
         Surface {
 
+            val resultsUiState = ResultsUiState(
+                score = 1200,
+                correctAnswers = 3,
+                totalQuestions = 5,
+                attemptedQuestions = listOf(
+                    QuestionResult(
+                        "Which word is opposite of empty?",
+                        AnswerState.CORRECT
+                    ),
+                    QuestionResult(
+                        "Which word is opposite of hot",
+                        AnswerState.CORRECT
+                    ),
+                    QuestionResult(
+                        "Which word is opposite of clean",
+                        AnswerState.WRONG
+                    ),
+                    QuestionResult(
+                        "Which word is opposite of start",
+                        AnswerState.UNANSWERED
+                    ),
+                    QuestionResult(
+                        "Which word is opposite of happy",
+                        AnswerState.CORRECT
+                    )
+                )
+            )
             ResultsScreenContent(
+                resultsUiState = resultsUiState
+
             )
         }
     }
