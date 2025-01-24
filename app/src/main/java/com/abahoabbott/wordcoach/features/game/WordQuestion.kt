@@ -19,7 +19,9 @@ data class GameOption(
     val text: String = "",
     val isCorrect: Boolean = false
 )
-
+/**
+ * Enum for game difficulty levels.
+ */
 enum class Difficulty {
     EASY, MEDIUM, HARD
 }
@@ -96,7 +98,5 @@ val moreQuestions = listOf(
 // Combine all questions
 val allQuestions = initialQuestions + moreQuestions
 
-fun getQuestionsByDifficulty(difficulty: Difficulty): List<WordQuestion> {
-    return allQuestions.filter { it.difficulty == difficulty }
-}
+
 

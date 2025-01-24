@@ -35,7 +35,8 @@ import javax.inject.Inject
  * - Resetting the game.
  */
 @HiltViewModel
-class GameViewModel @Inject constructor(@ApplicationContext private val context: Context) : ViewModel() {
+class GameViewModel @Inject constructor(@ApplicationContext private val context: Context) :
+    ViewModel() {
 
     //Game Ui State
     private val _uiState = MutableStateFlow(GameUiState())
@@ -52,10 +53,6 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
     val events = _events.receiveAsFlow()
 
     init {
-        viewModelScope.launch {
-            resetCumulativeScore()
-        }
-
         resetGame()
     }
 
@@ -63,67 +60,73 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
     fun onOptionSelected(selectedOptionId: Int, isCorrect: Boolean) {
         if (usedQuestions.size <= MAX_NO_OF_QUESTIONS) {
             updateUiState(selectedOptionId, isCorrect)
-            showNextQuestion(usedQuestions.size == MAX_NO_OF_QUESTIONS)
-            updateQuestionResult(_uiState.value.currentQuestion.question, isCorrect)
+            proceedToNextStep()
+            updateQuestionResults(isCorrect)
         }
     }
 
     private fun updateUiState(selectedOptionId: Int, isCorrect: Boolean) {
         _uiState.update { state ->
             state.copy(
-                isGameOver = false,
-                selectedOptionId = selectedOptionId,
-                score = state.score + if (isCorrect) SCORE_INCREASE else 0,
-                passedQuestions = state.passedQuestions + if (isCorrect) 1 else 0,
+                scoreState = state.scoreState.copy(
+                    score = state.scoreState.score + if (isCorrect) SCORE_INCREASE else 0,
+                    correctQuestions = state.scoreState.correctQuestions + if (isCorrect) 1 else 0
+                ),
+                questionState = state.questionState.copy(
+                    selectedOptionId = selectedOptionId
+                )
             )
         }
     }
 
 
-    private fun showNextQuestion(isGameOver: Boolean) {
+    private fun proceedToNextStep() {
         viewModelScope.launch {
-            if (isGameOver) {
+            if (usedQuestions.size == MAX_NO_OF_QUESTIONS) {
                 //navigate to results screen if game is over
                 navigateToResultsScreen()
             } else {
                 //pick next question if the game is not yet over
-                pickNextQuestion()
+                showNextQuestion()
             }
 
         }
     }
 
-    private suspend fun pickNextQuestion() {
+    private suspend fun showNextQuestion() {
         delay(1500L)
         _uiState.update { state ->
             state.copy(
-                currentQuestion = pickRandomQuestionAndShuffle(),
-                selectedOptionId = null,
+                questionState = state.questionState.copy(
+                    currentQuestion = pickNextQuestion(),
+                    selectedOptionId = null
+                ),
+                gameProgress = state.gameProgress.copy(
+                    answeredQuestions = questionResults.size,
+                    totalQuestions = MAX_NO_OF_QUESTIONS
+                )
             )
         }
-        updateProgressBar()
+
     }
 
     private suspend fun navigateToResultsScreen() {
         //Navigate to results screen
 
-        val cumulativeScore = getCumulativeScore()
-
         // Calculate the total score for the user: current game's score plus the cumulative score.
-        val totalScore = _uiState.value.score + cumulativeScore
+        val totalScore = _uiState.value.scoreState.score + getCumulativeScore()
 
         // Save the updated cumulative score to DataStore
         saveCumulativeScore(totalScore)
 
-
         val gameResult = GameResult(
             totalScore = totalScore,
-            passedQuestions = _uiState.value.passedQuestions,
+            passedQuestions = _uiState.value.scoreState.correctQuestions,
             attemptedQuestions = questionResults
         )
 
         delay(1500L)
-        updateProgressBar()
+
         _events.send(
             NavEvent.NavigateToResultsScreen(
                 gameResult
@@ -144,50 +147,45 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
         }
     }
 
-    private suspend fun resetCumulativeScore(){
-        context.dataStore.edit {
-            preferences ->
-            preferences[SCORE_KEY] =0
+    private suspend fun resetCumulativeScore() {
+        context.dataStore.edit { preferences ->
+            preferences[SCORE_KEY] = 0
         }
+    }
+
+    private fun pickNextQuestion(): WordQuestion {
+        val remainingQuestions = allQuestions.filter { it !in usedQuestions }
+        return remainingQuestions.random().also { usedQuestions.add(it) }
     }
 
 
     fun resetGame() {
-        usedQuestions.clear()
-        questionResults.clear()
+        clearGameState()
         viewModelScope.launch {
             _uiState.value = GameUiState(
-                currentQuestion = pickRandomQuestionAndShuffle(),
-                score = getCumulativeScore(),
-                progress = 0f
+                questionState = QuestionState(currentQuestion = pickNextQuestion()),
+                scoreState = ScoreState(
+                    score = getCumulativeScore(),
+                    correctQuestions = 0,
+                ),
+                gameProgress = GameProgress(
+                    totalQuestions = MAX_NO_OF_QUESTIONS,
+                )
             )
         }
 
 
     }
 
-    private fun pickRandomQuestionAndShuffle(): WordQuestion {
-        var question: WordQuestion
-        while (true) {
-            question = allQuestions.random()
-            if (!usedQuestions.contains(question)) break
-        }
-        usedQuestions.add(question)
-        return question
+    private fun clearGameState() {
+        usedQuestions.clear()
+        questionResults.clear()
     }
 
-    private fun updateProgressBar() {
-        _uiState.update { gameUiState ->
-            gameUiState.copy(
-                progress = questionResults.size.toFloat() / MAX_NO_OF_QUESTIONS
-            )
-        }
-    }
-
-    private fun updateQuestionResult(questionText: String, isCorrect: Boolean) {
+    private fun updateQuestionResults(isCorrect: Boolean) {
         val answerState = if (isCorrect) AnswerState.CORRECT else AnswerState.WRONG
         val questionResult = QuestionResult(
-            question = questionText,
+            question = _uiState.value.questionState.currentQuestion.question,
             answerState = answerState
         )
         questionResults.add(questionResult)
@@ -200,10 +198,13 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
     fun onSkip() {
         //Update answer state to unanswered
         val questionResult =
-            QuestionResult(_uiState.value.currentQuestion.question, AnswerState.UNANSWERED)
+            QuestionResult(
+                _uiState.value.questionState.currentQuestion.question,
+                AnswerState.UNANSWERED
+            )
         questionResults.add(questionResult)
         //
-        showNextQuestion(usedQuestions.size == MAX_NO_OF_QUESTIONS)
+        proceedToNextStep()
     }
 
 

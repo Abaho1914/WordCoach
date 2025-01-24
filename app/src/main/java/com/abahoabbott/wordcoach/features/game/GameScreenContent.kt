@@ -66,7 +66,7 @@ internal fun GameScreen(
         uiState = uiState,
         onOptionSelected = { id, isCorrect -> viewModel.onOptionSelected(id, isCorrect) },
         onSkip = { viewModel.onSkip() },
-        progress = uiState.progress
+        progress = uiState.gameProgress.progressFraction
     )
 }
 
@@ -82,7 +82,7 @@ private fun GameScreenContent(
 ) {
     Scaffold(
         topBar = {
-            GameTopBar(uiState.score)
+            GameTopBar(uiState.scoreState.score)
         }
     ) { paddingValues ->
         Column(
@@ -94,8 +94,8 @@ private fun GameScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             GameLayout(
-                question = uiState.currentQuestion,
-                selectedOptionId = uiState.selectedOptionId,
+                question = uiState.questionState.currentQuestion,
+                selectedOptionId = uiState.questionState.selectedOptionId,
                 onOptionSelected = onOptionSelected
             )
             GameProgressBar(
@@ -221,7 +221,17 @@ private fun GameScreenPreview() {
         Surface {
             GameScreenContent(
                 uiState = GameUiState(
-                    currentQuestion = allQuestions[5]
+                    questionState = QuestionState(
+                        currentQuestion = allQuestions.random()
+                    ),
+                    scoreState = ScoreState(
+                        score = 360,
+                    ),
+                    gameProgress = GameProgress(
+                        answeredQuestions = 3,
+                        totalQuestions = 5
+
+                    )
                 ),
                 onOptionSelected = { _, _ -> },
                 onSkip = {}
