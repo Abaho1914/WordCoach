@@ -1,14 +1,15 @@
 package com.abahoabbott.wordcoach.features.game
 
+
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class WordQuestion(
     val questionId: Int = 0,
     val question: String = "",
-    val options: GameOptions = listOf()
+    val options: GameOptions = listOf(),
+    val difficulty: Difficulty = Difficulty.EASY // Add difficulty level
 )
-
 
 typealias GameOptions = List<GameOption>
 
@@ -19,76 +20,78 @@ data class GameOption(
     val isCorrect: Boolean = false
 )
 
+enum class Difficulty {
+    EASY, MEDIUM, HARD
+}
 
-val initialOptions = listOf(
-    WordQuestion(
-        questionId = 0,
+// Helper function to create questions
+fun createWordQuestion(
+    id: Int,
+    question: String,
+    options: List<Pair<String, Boolean>>,
+    difficulty: Difficulty
+): WordQuestion {
+    val gameOptions = options.mapIndexed { index, option ->
+        GameOption(optionId = index, text = option.first, isCorrect = option.second)
+    }
+    return WordQuestion(questionId = id, question = question, options = gameOptions, difficulty = difficulty)
+}
+
+// Initial questions
+val initialQuestions = listOf(
+    createWordQuestion(
+        id = 0,
         question = "Which word is similar to happy?",
-        options = listOf(GameOption(0, "Joyful", true), GameOption(1, "Sad", false))
+        options = listOf("Joyful" to true, "Sad" to false),
+        difficulty = Difficulty.EASY
     ),
-    WordQuestion(
-        questionId = 1,
+    createWordQuestion(
+        id = 1,
         question = "Which word is opposite of start?",
-        options = listOf(GameOption(0, "Begin", false), GameOption(1, "End", true))
+        options = listOf("Begin" to false, "End" to true),
+        difficulty = Difficulty.EASY
     ),
-    WordQuestion(
-        questionId = 2,
+    createWordQuestion(
+        id = 2,
         question = "Which word is similar to big?",
-        options = listOf(GameOption(0, "Large", true), GameOption(1, "Small", false))
+        options = listOf("Large" to true, "Small" to false),
+        difficulty = Difficulty.EASY
     ),
-    WordQuestion(
-        questionId = 3,
+    createWordQuestion(
+        id = 3,
         question = "Which word is opposite of hot?",
-        options = listOf(GameOption(0, "Cold", true), GameOption(1, "Warm", false))
-    ),
-    WordQuestion(
-        questionId = 4,
-        question = "Which word is similar to quick?",
-        options = listOf(GameOption(0, "Fast", true), GameOption(1, "Slow", false))
-    ),
-)
-
-val moreQuestions = listOf(
-    WordQuestion(
-        questionId = 5,
-        question = "Which word is similar to happy",
-        options = listOf(GameOption(0, "Joyful", true), GameOption(1, "Sad", false))
-    ),
-    WordQuestion(
-        questionId = 6,
-        question = "Which word is opposite of start",
-        options = listOf(GameOption(0, "Begin", false), GameOption(1, "End", true))
-    ),
-    WordQuestion(
-        questionId = 7,
-        question = "Which word is similar to big",
-        options = listOf(GameOption(0, "Large", true), GameOption(1, "Small", false))
-    ),
-    WordQuestion(
-        questionId = 8,
-        question = "Which word is opposite of hot",
-        options = listOf(GameOption(0, "Cold", true), GameOption(1, "Warm", false))
-    ),
-    WordQuestion(
-        questionId = 9,
-        question = "Which word is similar to quick",
-        options = listOf(GameOption(0, "Fast", true), GameOption(1, "Slow", false))
-    ),
-    WordQuestion(
-        questionId = 10,
-        question = "Which word is opposite of empty",
-        options = listOf(GameOption(0, "Full", true), GameOption(1, "Vacant", false))
-    ),
-    WordQuestion(
-        questionId = 11,
-        question = "Which word is similar to difficult",
-        options = listOf(GameOption(0, "Hard", true), GameOption(1, "Easy", false))
-    ),
-    WordQuestion(
-        questionId = 12,
-        question = "Which word is opposite of clean",
-        options = listOf(GameOption(0, "Dirty", true), GameOption(1, "Tidy", false))
+        options = listOf("Cold" to true, "Warm" to false),
+        difficulty = Difficulty.EASY
     )
 )
-val allQuestions = initialOptions + moreQuestions
 
+// Additional questions with varying difficulty levels
+val moreQuestions = listOf(
+    createWordQuestion(
+        id = 4,
+        question = "Which word is opposite of empty?",
+        options = listOf("Full" to true, "Vacant" to false),
+        difficulty = Difficulty.MEDIUM
+    ),
+    createWordQuestion(
+        id = 5,
+        question = "Which word is similar to difficult?",
+        options = listOf("Hard" to true, "Easy" to false),
+        difficulty = Difficulty.MEDIUM
+    ),
+    createWordQuestion(
+        id = 6,
+        question = "Which word is opposite of clean?",
+        options = listOf("Dirty" to true, "Tidy" to false),
+        difficulty = Difficulty.HARD
+    ),
+    createWordQuestion(
+        id = 7,
+        question = "Which word is the synonym of 'abundant'?",
+        options = listOf("Plentiful" to true, "Scarce" to false),
+        difficulty = Difficulty.HARD
+    )
+)
+
+// Combine all questions
+val allQuestions = initialQuestions + moreQuestions
