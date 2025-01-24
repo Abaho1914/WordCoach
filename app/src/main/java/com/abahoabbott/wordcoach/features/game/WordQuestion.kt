@@ -95,3 +95,8 @@ val moreQuestions = listOf(
 
 // Combine all questions
 val allQuestions = initialQuestions + moreQuestions
+
+fun getQuestionsByDifficulty(difficulty: Difficulty): List<WordQuestion> {
+    return allQuestions.filter { it.difficulty == difficulty }
+}
+
