@@ -94,7 +94,7 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
     }
 
     private suspend fun showNextQuestion() {
-        delay(1500L)
+        delay(5000L)
         _uiState.update { state ->
             state.copy(
                 questionState = state.questionState.copy(
