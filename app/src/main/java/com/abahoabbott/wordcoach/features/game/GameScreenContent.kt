@@ -180,6 +180,7 @@ private fun GameLayout(
     selectedOptionId: Int?,
     onOptionSelected: (optionId: Int, isCorrect: Boolean) -> Unit,
 ) {
+    val isAnswered = selectedOptionId != null
     Column(
         modifier = modifier
             .fillMaxWidth(),
@@ -206,8 +207,11 @@ private fun GameLayout(
                 isAnswerCorrect = option.isCorrect,
                 isSelected = selectedOptionId == option.optionId,
                 onClickButton = {
-                    onOptionSelected(option.optionId, option.isCorrect)
-                }
+                    if (!isAnswered){
+                        onOptionSelected(option.optionId, option.isCorrect)
+                    }
+                          },
+                isClickable = !isAnswered
             )
         }
 

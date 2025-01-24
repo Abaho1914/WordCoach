@@ -1,5 +1,6 @@
 package com.abahoabbott.wordcoach.common
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +30,8 @@ fun WordCoachOptionsButton(
     isAnswerCorrect: Boolean,
     onClickButton: () -> Unit = {},
     isSelected: Boolean = false,
-    answerOption: String
+    answerOption: String,
+    isClickable: Boolean = true
 ) {
 
     val buttonColors = when {
@@ -44,6 +46,11 @@ fun WordCoachOptionsButton(
     OutlinedButton(
         onClick = onClickButton,
         modifier = modifier
+            .clickable(
+                enabled = isClickable,
+                onClick = {}
+
+            )
             .fillMaxWidth()
             .padding(8.dp),
         shape = MaterialTheme.shapes.small,
