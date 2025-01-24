@@ -1,6 +1,7 @@
 package com.abahoabbott.wordcoach.features.game
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.lifecycle.ViewModel
@@ -52,6 +53,11 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
     private val _events = Channel<NavEvent>()
     val events = _events.receiveAsFlow()
 
+
+    private var currentDifficulty: Difficulty = Difficulty.EASY // Start with easy difficulty
+    private var correctAnswersInLevel: Int = 0
+    private var wrongAnswersInLevel: Int = 0
+
     init {
         resetGame()
     }
@@ -77,6 +83,19 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
                 )
             )
         }
+
+        // Update difficulty logic
+        if (isCorrect) {
+            correctAnswersInLevel++
+            if (correctAnswersInLevel >= CORRECT_ANSWERS_TO_LEVEL_UP) {
+                levelUp()
+            }
+        } else {
+            wrongAnswersInLevel++
+            if (wrongAnswersInLevel >= WRONG_ANSWERS_TO_LEVEL_DOWN) {
+                levelDown()
+            }
+        }
     }
 
 
@@ -94,7 +113,7 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
     }
 
     private suspend fun showNextQuestion() {
-        delay(5000L)
+        delay(3000L)
         _uiState.update { state ->
             state.copy(
                 questionState = state.questionState.copy(
@@ -125,7 +144,7 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
             attemptedQuestions = questionResults
         )
 
-        delay(1500L)
+        delay(3000L)
 
         _events.send(
             NavEvent.NavigateToResultsScreen(
@@ -154,7 +173,7 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
     }
 
     private fun pickNextQuestion(): WordQuestion {
-        val remainingQuestions = allQuestions.filter { it !in usedQuestions }
+        val remainingQuestions = allQuestions.filter { it.difficulty == currentDifficulty && it !in usedQuestions }
         return remainingQuestions.random().also { usedQuestions.add(it) }
     }
 
@@ -215,7 +234,30 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
 
         super.onCleared()
     }
+    private fun levelUp() {
+        currentDifficulty = when (currentDifficulty) {
+            Difficulty.EASY -> Difficulty.MEDIUM
+            Difficulty.MEDIUM -> Difficulty.HARD
+            Difficulty.HARD -> Difficulty.HARD // Already at the highest level
+        }
+        Log.d("GameViewModel", "Level Up: Current difficulty is now $currentDifficulty")
+        resetLevelCounters()
+    }
 
+    private fun levelDown() {
+        currentDifficulty = when (currentDifficulty) {
+            Difficulty.EASY -> Difficulty.EASY // Already at the lowest level
+            Difficulty.MEDIUM -> Difficulty.EASY
+            Difficulty.HARD -> Difficulty.MEDIUM
+        }
+        Log.d("GameViewModel", "Level Down: Current difficulty is now $currentDifficulty")
+        resetLevelCounters()
+    }
+
+    private fun resetLevelCounters() {
+        correctAnswersInLevel = 0
+        wrongAnswersInLevel = 0
+    }
     companion object {
         //Score increase when user answers correctly
         private const val SCORE_INCREASE = 120
@@ -224,6 +266,9 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
         private const val MAX_NO_OF_QUESTIONS = 5
 
         private val SCORE_KEY = intPreferencesKey("cumulative_score")
+
+        private const val CORRECT_ANSWERS_TO_LEVEL_UP = 3
+        private const val WRONG_ANSWERS_TO_LEVEL_DOWN = 2
     }
 
 }
