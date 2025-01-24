@@ -63,7 +63,7 @@ internal fun GameScreen(
 
 
     GameScreenContent(
-        newUiState = uiState,
+        uiState = uiState,
         onOptionSelected = { id, isCorrect -> viewModel.onOptionSelected(id, isCorrect) },
         onSkip = { viewModel.onSkip() },
         progress = uiState.progress
@@ -75,44 +75,14 @@ internal fun GameScreen(
 @Composable
 private fun GameScreenContent(
     modifier: Modifier = Modifier,
-    newUiState: GameUiState = GameUiState(),
+    uiState: GameUiState = GameUiState(),
     onOptionSelected: (optionId: Int, isCorrect: Boolean) -> Unit,
     onSkip: () -> Unit,
     progress: Float = 0.0f
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        //   verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        ) {
-                            Text("Score: ")
-                            Text(
-                                text = "${newUiState.score}",
-                                color = Color(0xFF4CAF50)
-                            )
-                        }
-                    }
-
-
-                },
-
-                )
+            GameTopBar(uiState.score)
         }
     ) { paddingValues ->
         Column(
@@ -124,8 +94,8 @@ private fun GameScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             GameLayout(
-                question = newUiState.currentQuestion,
-                selectedOptionId = newUiState.selectedOptionId,
+                question = uiState.currentQuestion,
+                selectedOptionId = uiState.selectedOptionId,
                 onOptionSelected = onOptionSelected
             )
             GameProgressBar(
@@ -136,6 +106,41 @@ private fun GameScreenContent(
     }
 }
 
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun GameTopBar(score: Int) {
+    TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            titleContentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    Text(stringResource(R.string.score_label))
+                    Text(
+                        text = score.toString(),
+                        color = Color(0xFF4CAF50)
+                    )
+                }
+            }
+
+
+        },
+
+        )
+}
+
 
 @Composable
 private fun GameProgressBar(
@@ -143,8 +148,6 @@ private fun GameProgressBar(
     onSkip: () -> Unit = {},
     progress: Float,
 ) {
-
-
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -164,7 +167,7 @@ private fun GameProgressBar(
                 contentColor = MaterialTheme.colorScheme.primary
             )
         ) {
-            Text("SKIP")
+            Text(stringResource(R.string.skip_button))
         }
     }
 
@@ -193,7 +196,7 @@ private fun GameLayout(
         options.forEachIndexed { index, option ->
             if (index > 0) {
                 Text(
-                    text = "or",
+                    text = stringResource(R.string.or),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
@@ -217,7 +220,7 @@ private fun GameScreenPreview() {
     WordCoachTheme {
         Surface {
             GameScreenContent(
-                newUiState = GameUiState(
+                uiState = GameUiState(
                     currentQuestion = allQuestions[5]
                 ),
                 onOptionSelected = { _, _ -> },

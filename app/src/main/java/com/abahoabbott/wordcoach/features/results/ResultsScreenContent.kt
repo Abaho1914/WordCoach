@@ -1,6 +1,7 @@
 package com.abahoabbott.wordcoach.features.results
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -262,8 +263,9 @@ private fun ScoreBoard(
             verticalArrangement = Arrangement.Center,
 
             ) {
+            val animatedScore by animateFloatAsState(targetValue = resultsUiState.score.toFloat())
             Text(
-                "Score : ${resultsUiState.score}",
+                "Score : ${animatedScore.toInt()}",
                 color = Color(0xFF4CAF50),
                 textAlign = TextAlign.Start,
                 style = MaterialTheme.typography.headlineSmall

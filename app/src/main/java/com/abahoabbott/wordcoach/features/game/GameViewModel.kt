@@ -52,6 +52,10 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
     val events = _events.receiveAsFlow()
 
     init {
+        viewModelScope.launch {
+            resetCumulativeScore()
+        }
+
         resetGame()
     }
 
@@ -140,6 +144,13 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
         }
     }
 
+    private suspend fun resetCumulativeScore(){
+        context.dataStore.edit {
+            preferences ->
+            preferences[SCORE_KEY] =0
+        }
+    }
+
 
     fun resetGame() {
         usedQuestions.clear()
@@ -195,6 +206,14 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
         showNextQuestion(usedQuestions.size == MAX_NO_OF_QUESTIONS)
     }
 
+
+    override fun onCleared() {
+        viewModelScope.launch {
+            resetCumulativeScore()
+        }
+
+        super.onCleared()
+    }
 
     companion object {
         //Score increase when user answers correctly

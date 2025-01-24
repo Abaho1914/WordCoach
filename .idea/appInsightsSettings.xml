@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.abahoabbott.wordcoach" />
+                  <option name="mobileSdkAppId" value="1:849973889397:android:56323a93688111292e6b3c" />
+                  <option name="projectId" value="wordcoach-7b4b7" />
+                  <option name="projectNumber" value="849973889397" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

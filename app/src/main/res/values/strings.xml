@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">WordCoach</string>
     <string name="share_results">Share word coach results</string>
+    <string name="score_label">"Score: "</string>
+    <string name="skip_button">SKIP</string>
+    <string name="or">or</string>
 </resources>
