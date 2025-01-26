@@ -45,7 +45,7 @@ internal fun GameScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
+        viewModel.navigationEvents.collect { event ->
             when (event) {
                 is NavEvent.NavigateToResultsScreen -> {
                     navigateToResultsScreen(

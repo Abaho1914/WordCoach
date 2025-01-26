@@ -1,7 +1,6 @@
 package com.abahoabbott.wordcoach.features.game
 
 import android.util.Log
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abahoabbott.wordcoach.data.GameUiState
@@ -41,14 +40,14 @@ class GameViewModel @Inject constructor(
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     //set of questions to be used in the game
-    private var usedQuestions: MutableList<WordQuestion> = mutableListOf()
+    private var toBeUsedQuestions: MutableList<WordQuestion> = mutableListOf()
 
     //set of questions that the user has answered
-    private var questionResults: MutableList<QuestionResult> = mutableListOf()
+    private var userAnswers: MutableList<QuestionResult> = mutableListOf()
 
     //Navigation event
-    private val _events = Channel<NavEvent>()
-    val events = _events.receiveAsFlow()
+    private val _navigationEvents = Channel<NavEvent>()
+    val navigationEvents = _navigationEvents.receiveAsFlow()
 
 
     private var currentDifficulty: Difficulty = Difficulty.EASY // Start with easy difficulty
@@ -61,7 +60,7 @@ class GameViewModel @Inject constructor(
 
 
     fun onOptionSelected(selectedOptionId: Int, isCorrect: Boolean) {
-        if (usedQuestions.size <= MAX_NO_OF_QUESTIONS) {
+        if (toBeUsedQuestions.size <= MAX_NO_OF_QUESTIONS) {
             updateUiState(selectedOptionId, isCorrect)
             proceedToNextStep()
             updateQuestionResults(isCorrect)
@@ -98,7 +97,7 @@ class GameViewModel @Inject constructor(
 
     private fun proceedToNextStep() {
         viewModelScope.launch {
-            if (usedQuestions.size == MAX_NO_OF_QUESTIONS) {
+            if (toBeUsedQuestions.size == MAX_NO_OF_QUESTIONS) {
                 //navigate to results screen if game is over
                 navigateToResultsScreen()
             } else {
@@ -118,7 +117,7 @@ class GameViewModel @Inject constructor(
                     selectedOptionId = null
                 ),
                 gameProgress = state.gameProgress.copy(
-                    answeredQuestions = questionResults.size,
+                    answeredQuestions = userAnswers.size,
                     totalQuestions = MAX_NO_OF_QUESTIONS
                 )
             )
@@ -138,12 +137,12 @@ class GameViewModel @Inject constructor(
         val gameResult = GameResult(
             totalScore = totalScore,
             passedQuestions = _uiState.value.scoreState.correctQuestions,
-            attemptedQuestions = questionResults
+            attemptedQuestions = userAnswers
         )
 
         delay(3000L)
 
-        _events.send(
+        _navigationEvents.send(
             NavEvent.NavigateToResultsScreen(
                 gameResult
             )
@@ -163,8 +162,8 @@ class GameViewModel @Inject constructor(
 
     private fun pickNextQuestion(): WordQuestion {
         val remainingQuestions =
-            allQuestions.filter { it.difficulty == currentDifficulty && it !in usedQuestions }
-        return remainingQuestions.random().also { usedQuestions.add(it) }
+            allQuestions.filter { it.difficulty == currentDifficulty && it !in toBeUsedQuestions }
+        return remainingQuestions.random().also { toBeUsedQuestions.add(it) }
     }
 
 
@@ -187,8 +186,8 @@ class GameViewModel @Inject constructor(
     }
 
     private fun clearGameState() {
-        usedQuestions.clear()
-        questionResults.clear()
+        toBeUsedQuestions.clear()
+        userAnswers.clear()
     }
 
     private fun updateQuestionResults(isCorrect: Boolean) {
@@ -197,7 +196,7 @@ class GameViewModel @Inject constructor(
             question = _uiState.value.questionState.currentQuestion.question,
             answerState = answerState
         )
-        questionResults.add(questionResult)
+        userAnswers.add(questionResult)
     }
 
 
@@ -211,7 +210,7 @@ class GameViewModel @Inject constructor(
                 _uiState.value.questionState.currentQuestion.question,
                 AnswerState.UNANSWERED
             )
-        questionResults.add(questionResult)
+        userAnswers.add(questionResult)
         //
         proceedToNextStep()
     }
@@ -256,8 +255,6 @@ class GameViewModel @Inject constructor(
 
         //Max number of questions are user can attempt per game
         private const val MAX_NO_OF_QUESTIONS = 5
-
-        private val SCORE_KEY = intPreferencesKey("cumulative_score")
 
         private const val CORRECT_ANSWERS_TO_LEVEL_UP = 3
         private const val WRONG_ANSWERS_TO_LEVEL_DOWN = 2
