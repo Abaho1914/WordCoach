@@ -1,25 +1,20 @@
 package com.abahoabbott.wordcoach.features.game
 
-import android.content.Context
 import android.util.Log
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.abahoabbott.wordcoach.common.dataStore
 import com.abahoabbott.wordcoach.data.GameUiState
+import com.abahoabbott.wordcoach.features.game.repository.GameRepository
 import com.abahoabbott.wordcoach.features.results.AnswerState
 import com.abahoabbott.wordcoach.features.results.QuestionResult
 import com.abahoabbott.wordcoach.nav.NavEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -36,7 +31,9 @@ import javax.inject.Inject
  * - Resetting the game.
  */
 @HiltViewModel
-class GameViewModel @Inject constructor(@ApplicationContext private val context: Context) :
+class GameViewModel @Inject constructor(
+    private val gameRepository: GameRepository
+) :
     ViewModel() {
 
     //Game Ui State
@@ -154,26 +151,19 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
     }
 
     private suspend fun getCumulativeScore(): Int {
-        return context.dataStore.data.map { preferences ->
-            preferences[SCORE_KEY] ?: 0
-        }
-            .first()
+        return gameRepository.getCumulativeScore()
     }
 
     private suspend fun saveCumulativeScore(score: Int) {
-        context.dataStore.edit { preferences ->
-            preferences[SCORE_KEY] = score
-        }
+        gameRepository.saveCumulativeScore(score)
     }
 
-    private suspend fun resetCumulativeScore() {
-        context.dataStore.edit { preferences ->
-            preferences[SCORE_KEY] = 0
-        }
-    }
+    private suspend fun resetCumulativeScore() = gameRepository.resetCumulativeScore()
+
 
     private fun pickNextQuestion(): WordQuestion {
-        val remainingQuestions = allQuestions.filter { it.difficulty == currentDifficulty && it !in usedQuestions }
+        val remainingQuestions =
+            allQuestions.filter { it.difficulty == currentDifficulty && it !in usedQuestions }
         return remainingQuestions.random().also { usedQuestions.add(it) }
     }
 
@@ -234,6 +224,7 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
 
         super.onCleared()
     }
+
     private fun levelUp() {
         currentDifficulty = when (currentDifficulty) {
             Difficulty.EASY -> Difficulty.MEDIUM
@@ -258,6 +249,7 @@ class GameViewModel @Inject constructor(@ApplicationContext private val context:
         correctAnswersInLevel = 0
         wrongAnswersInLevel = 0
     }
+
     companion object {
         //Score increase when user answers correctly
         private const val SCORE_INCREASE = 120
