@@ -19,7 +19,9 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
     }
 
     buildTypes {
@@ -82,6 +84,18 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.android.compiler)
 
+    //retrofit
+   // implementation "com.squareup.retrofit2:retrofit:2.9.0"
+ //   implementation "com.squareup.retrofit2:converter-gson:2.9.0"
+ //   implementation "com.squareup.okhttp3:logging-interceptor:4.9.3"
+    // Retrofit
+    implementation(libs.retrofit)
+// Retrofit with Scalar Converter
+    implementation(libs.converter.scalars)
+// Retrofit with Kotlin serialization Converter
+
+    implementation(libs.retrofit2.kotlinx.serialization.converter)
+    implementation(libs.okhttp)
 
     //serialization
     implementation(libs.kotlinx.serialization.json)
