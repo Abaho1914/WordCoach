@@ -9,7 +9,6 @@ import com.abahoabbott.wordcoach.features.results.AnswerState
 import com.abahoabbott.wordcoach.features.results.QuestionResult
 import com.abahoabbott.wordcoach.nav.NavEvent
 import com.abahoabbott.wordcoach.network.WordnikApi
-import com.abahoabbott.wordcoach.network.WordnikApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay

@@ -5,12 +5,9 @@ import com.abahoabbott.wordcoach.network.data.WordOfTheDayResponse
 import com.google.gson.Gson
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.Query
 
 //Used BuildConfig.WORDNIK_API_KEY to hide the api key
 private const val WORDNIK_API_KEY = BuildConfig.WORDNIK_API_KEY
