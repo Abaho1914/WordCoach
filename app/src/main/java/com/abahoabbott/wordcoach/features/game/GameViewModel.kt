@@ -59,8 +59,10 @@ class GameViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             resetCumulativeScore()
-            val wordOfTheDay = WordnikApi.retrofitService.getPhotos()
+            val wordOfTheDay = WordnikApi.retrofitService.getWordOfTheDay()
+          //  val randomWord = WordnikApi.retrofitService.getRandomWord()
             Log.i("Sunflower:GameViewModel", "Word of the Day: $wordOfTheDay")
+          //  Log.i("Sunflower:GameViewModel", "Word of the Day: $randomWord")
         }
 
         resetGame()

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -22,6 +24,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+        buildConfigField("String", "WORDNIK_API_KEY", properties.getProperty("WORDNIK_API_KEY"))
+
     }
 
     buildTypes {
@@ -41,6 +47,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     room {
@@ -92,8 +99,9 @@ dependencies {
     implementation(libs.retrofit)
 // Retrofit with Scalar Converter
     implementation(libs.converter.scalars)
+    implementation (libs.converter.gson)
 // Retrofit with Kotlin serialization Converter
-
+    implementation(libs.logging.interceptor)
     implementation(libs.retrofit2.kotlinx.serialization.converter)
     implementation(libs.okhttp)
 

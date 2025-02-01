@@ -41,7 +41,8 @@ class GameRepository @Inject constructor(
     fun getNextQuestion(difficulty: Difficulty, usedQuestions: List<WordQuestion>): WordQuestion {
         val remainingQuestions =
             allQuestions.filter { it.difficulty == difficulty && it !in usedQuestions }
-        return remainingQuestions.random()
+      //  return remainingQuestions.random()
+        return allQuestions.random()
     }
 
 }
