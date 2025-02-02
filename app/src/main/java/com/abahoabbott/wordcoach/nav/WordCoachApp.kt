@@ -8,10 +8,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.abahoabbott.wordcoach.features.game.nav.AppDestination
 import com.abahoabbott.wordcoach.features.game.nav.gameDestination
-import com.abahoabbott.wordcoach.features.game.nav.navigateToResultsScreen
-import com.abahoabbott.wordcoach.features.results.nav.navigateToGameDestination
+import com.abahoabbott.wordcoach.features.game.nav.navigateToGameDestination
+import com.abahoabbott.wordcoach.features.results.nav.navigateToResultsScreen
 import com.abahoabbott.wordcoach.features.results.nav.resultsDestination
 import com.abahoabbott.wordcoach.features.splash.nav.splashDestination
+import com.abahoabbott.wordcoach.features.wod.nav.navigateToWoDScreen
+import com.abahoabbott.wordcoach.features.wod.nav.wordOfTheDayDestination
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 
 @Composable
@@ -29,6 +31,10 @@ fun WordCoachApp() {
                 startDestination = AppDestination.Splash.route
             ) {
                 splashDestination {
+                    navController.navigateToWoDScreen()
+                }
+
+                wordOfTheDayDestination {
                     navController.navigateToGameDestination()
                 }
 

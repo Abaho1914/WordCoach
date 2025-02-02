@@ -16,10 +16,10 @@ import com.abahoabbott.wordcoach.features.results.ResultsScreen
 import kotlinx.serialization.json.Json
 
 
-fun NavController.navigateToGameDestination() {
-    navigate(AppDestination.Game.route)
-
+fun NavController.navigateToResultsScreen(gameResult: GameResult) {
+    navigate(route = AppDestination.Results.createRoute(gameResult = gameResult))
 }
+
 private fun shareResults(context: Context,subject: String,summary: String) {
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"

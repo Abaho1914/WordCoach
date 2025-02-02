@@ -9,8 +9,8 @@ import com.abahoabbott.wordcoach.features.game.GameScreen
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-fun NavController.navigateToResultsScreen(gameResult: GameResult) {
-    navigate(route = AppDestination.Results.createRoute(gameResult = gameResult))
+fun NavController.navigateToGameDestination() {
+    navigate(AppDestination.Game.route)
 }
 
 
@@ -27,6 +27,8 @@ sealed class AppDestination(val route: String) {
     //Screens without parameters
     object Splash: AppDestination("Splash")
     object Game : AppDestination("Game")
+
+    object WoD: AppDestination("WordOfTheDay")
 
 
     object Results: AppDestination("Results") {

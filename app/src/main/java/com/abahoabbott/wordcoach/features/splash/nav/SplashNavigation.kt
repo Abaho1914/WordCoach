@@ -6,14 +6,14 @@ import com.abahoabbott.wordcoach.features.game.nav.AppDestination
 import com.abahoabbott.wordcoach.features.splash.SplashScreen
 
 fun NavGraphBuilder.splashDestination(
-    navigateToGameScreen:()-> Unit
+    navigateToWoDScreen:()-> Unit
 ){
     composable(
         route = AppDestination.Splash.route
     ){
         SplashScreen(
             onSplashedScreenFinished = {
-                navigateToGameScreen()
+                navigateToWoDScreen()
             }
         )
     }
