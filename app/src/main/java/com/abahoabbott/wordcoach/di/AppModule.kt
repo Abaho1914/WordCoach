@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.abahoabbott.wordcoach.common.dataStore
+import com.abahoabbott.wordcoach.features.wod.DataStoreManager
 import com.abahoabbott.wordcoach.features.game.repository.GameRepository
 import dagger.Module
 import dagger.Provides
@@ -24,5 +25,11 @@ object AppModule {
     @Singleton
     fun provideGameRepository(dataStore: DataStore<Preferences>): GameRepository {
         return GameRepository(dataStore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDataStoreManager(@ApplicationContext context: Context): DataStoreManager {
+        return DataStoreManager(context)
     }
 }
