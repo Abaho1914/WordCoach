@@ -2,88 +2,125 @@ package com.abahoabbott.wordcoach.features.wod
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.io.IOException
 
-
-// Extension property for DataStore instance
 private val Context.dataStore by preferencesDataStore("word_of_the_day_prefs")
 
 /**
- * Manages saving and retrieving Word of the Day data using Android DataStore.
+ * Manages persistent storage for Word of the Day data using Android Preferences DataStore.
  *
- * @param context The Android Context used to access the DataStore.
+ * This class handles:
+ * - Storing and retrieving the last fetch timestamp
+ * - Serializing/deserializing WordOfTheDay objects to/from JSON
+ * - Providing reactive streams of stored data through Flow
+ * - Atomic operations for data consistency
+ *
+ * @property context Android context used to access the DataStore
  */
 class DataStoreManager(private val context: Context) {
 
     /**
-     * Encapsulated preference keys used in the DataStore.
+     * Preference keys used for DataStore operations.
      */
     private object PreferencesKeys {
         val LAST_FETCH_TIME = longPreferencesKey("last_fetch_time")
-        // Store the entire WordOfTheDay as a JSON string.
         val WORD_OF_THE_DAY = stringPreferencesKey("word_of_the_day")
     }
 
-    // Json serializer instance with configuration
-   private val json = Json { ignoreUnknownKeys = true }
-
-
     /**
-     * A [Flow] that emits the timestamp of the last fetch operation.
+     * JSON serializer configuration with:
+     * - Ignore unknown JSON properties
+     * - Coerce invalid values to defaults
      */
-    val lastFetchTime: Flow<Long> = context.dataStore.data
-        .map { preferences -> preferences[PreferencesKeys.LAST_FETCH_TIME] ?: 0L }
-
-
-    /**
-     * A [Flow] that emits the last stored [WordOfTheDay] object.
-     *
-     * Returns null if no word is stored.
-     */
-
-    val lastWord: Flow<WordOfTheDay?> = context.dataStore.data
-        .map { preferences ->
-            // Retrieve the stored JSON string.
-            val wordJson = preferences[PreferencesKeys.WORD_OF_THE_DAY] ?: return@map null
-            // Deserialize JSON to WordOfTheDay object.
-            runCatching {
-                json.decodeFromString<WordOfTheDay>(wordJson)
-            }.getOrElse { null }
-        }
-
-    /**
-     * Saves the timestamp of the last fetch operation.
-     *
-     * @param timestamp The timestamp to be saved.
-     */
-    suspend fun saveLastFetchTime(timestamp: Long) {
-        withContext(Dispatchers.IO) {
-            context.dataStore.edit { preferences ->
-                preferences[PreferencesKeys.LAST_FETCH_TIME] = timestamp
-            }
-        }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
     }
 
+    /**
+     * Flow emitting the timestamp of the last successful word fetch.
+     *
+     * Emits:
+     * - 0L if no timestamp is stored
+     * - Latest timestamp as Long for successful fetches
+     *
+     * Automatically recovers from read errors by emitting empty preferences.
+     */
+    val lastFetchTime: Flow<Long> = context.dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[PreferencesKeys.LAST_FETCH_TIME] ?: 0L }
 
     /**
-     * Saves the given [WordOfTheDay] object into the DataStore.
+     * Flow emitting the cached WordOfTheDay object if available.
      *
-     * @param word The [WordOfTheDay] object to be saved.
+     * Emits:
+     * - null if no word is stored or if deserialization fails
+     * - Latest valid WordOfTheDay object when available
+     *
+     * Handles:/
+     * - JSON deserialization errors
+     * - DataStore read errors (emits null)
      */
-        suspend fun saveWordOfTheDay(word: WordOfTheDay) {
-            withContext(Dispatchers.IO) {
-                context.dataStore.edit { preferences ->
-                    // Serialize the WordOfTheDay object to a JSON string.
-                    preferences[PreferencesKeys.WORD_OF_THE_DAY] = json.encodeToString(word)
+    val lastWord: Flow<WordOfTheDay?> = context.dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { preferences ->
+            preferences[PreferencesKeys.WORD_OF_THE_DAY]?.let { jsonString ->
+                try {
+                    json.decodeFromString<WordOfTheDay>(jsonString)
+                } catch (e: SerializationException) {
+                    null
                 }
             }
         }
+
+    /**
+     * Atomically saves both the word data and its associated timestamp.
+     *
+     * @param word The WordOfTheDay object to store
+     * @param timestamp The epoch millis timestamp of when the word was fetched
+     * @throws DataStoreOperationException if writing to DataStore fails
+     */
+    suspend fun saveWordData(word: WordOfTheDay, timestamp: Long) {
+        try {
+            context.dataStore.edit { preferences ->
+                preferences[PreferencesKeys.LAST_FETCH_TIME] = timestamp
+                preferences[PreferencesKeys.WORD_OF_THE_DAY] = json.encodeToString(word)
+            }
+        } catch (e: IOException) {
+            throw DataStoreOperationException("Failed to save word data", e)
+        }
+    }
+
+    /**
+     * Clears all stored word data and timestamps.
+     *
+     * Primarily used for:
+     * - Debugging purposes
+     * - Resetting user data
+     * - Handling logout scenarios
+     */
+    suspend fun clearData() {
+        context.dataStore.edit {
+            it.remove(PreferencesKeys.LAST_FETCH_TIME)
+            it.remove(PreferencesKeys.WORD_OF_THE_DAY)
+        }
+    }
 }
+
+/**
+ * Exception thrown when DataStore operations fail.
+ *
+ * @property message Human-readable error description
+ * @property cause Root exception that triggered the failure
+ */
+class DataStoreOperationException(message: String, cause: Throwable) : Exception(message, cause)

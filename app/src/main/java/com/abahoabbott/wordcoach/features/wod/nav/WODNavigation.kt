@@ -21,6 +21,9 @@ fun NavGraphBuilder.wordOfTheDayDestination(
     }
 }
 
+/**
+ * Navigates the user to the "Word of the Day" (WoD) screen.
+ */
 fun NavController.navigateToWoDScreen() {
     navigate(AppDestination.WoD.route)
 }

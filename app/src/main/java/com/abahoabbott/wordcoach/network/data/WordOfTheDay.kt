@@ -1,5 +1,7 @@
 package com.abahoabbott.wordcoach.network.data
 
+import kotlinx.serialization.Serializable
+
 // Data classes for API responses
 data class WordOfTheDayResponse(
     val _id: String,
@@ -17,6 +19,8 @@ data class ContentProvider(
     val name: String,
     val id: Int
 )
+
+@Serializable
 data class Definition(
     val source: String,
     val text: String,

@@ -1,5 +1,6 @@
 package com.abahoabbott.wordcoach.features.wod
 
+import com.abahoabbott.wordcoach.network.data.Definition
 import com.abahoabbott.wordcoach.network.data.WordOfTheDayResponse
 import kotlinx.serialization.Serializable
 
@@ -15,16 +16,16 @@ import kotlinx.serialization.Serializable
 data class WordOfTheDay(
     val word: String,
     val pronunciation: String,
-    val definition: String,
-    val examples: List<String>
+    val definition: Definition,
+    val examples: List<String>,
 )
 
 
 fun WordOfTheDayResponse.toWordOfTheDay(): WordOfTheDay {
     return WordOfTheDay(
         word = this.word,
-        pronunciation = "/ˈbalzəˌrin/", // Mocked, as Wordnik doesn't provide this
-        definition = this.definitions.firstOrNull()?.text ?: "No definition available",
-        examples = this.examples.map { it.text }
+        pronunciation = "[ˈbalzəˌrin]",
+        definition =this.definitions.first(),
+        examples = this.examples.map { it.text },
     )
 }
