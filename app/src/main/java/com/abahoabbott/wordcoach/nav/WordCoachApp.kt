@@ -1,6 +1,8 @@
 package com.abahoabbott.wordcoach.nav
 
 import android.util.Log
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -28,7 +30,9 @@ fun WordCoachApp() {
             val navController = rememberNavController()
             NavHost(
                 navController = navController,
-                startDestination = AppDestination.Splash.route
+                startDestination = AppDestination.Splash.route,
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None }
             ) {
                 splashDestination {
                     navController.navigateToWoDScreen()

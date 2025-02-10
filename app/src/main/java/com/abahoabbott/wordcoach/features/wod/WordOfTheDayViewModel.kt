@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abahoabbott.wordcoach.network.WordnikApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -30,9 +29,6 @@ class WordOfTheDayViewModel @Inject constructor(
     private val _wordOfTheDayState = MutableStateFlow<WordOfTheDayState>(WordOfTheDayState.Loading)
     val wordOfTheDayState: StateFlow<WordOfTheDayState> = _wordOfTheDayState
 
-    // Track ongoing network requests to prevent duplicates
-    private var fetchJob: Job? = null
-
     init {
         checkAndFetchWordOfTheDay()
     }
@@ -42,8 +38,7 @@ class WordOfTheDayViewModel @Inject constructor(
      * Optimizes network usage by checking cached data validity first.
      */
     private fun checkAndFetchWordOfTheDay() {
-        fetchJob?.cancel() // Cancel previous request if exists
-        fetchJob = viewModelScope.launch {
+        viewModelScope.launch {
             try {
                 // Combine both data store requests into a single operation
                 val (lastFetchTime, cachedWord) = combine(
@@ -51,9 +46,12 @@ class WordOfTheDayViewModel @Inject constructor(
                     dataStoreManager.lastWord
                 ) { time, word -> Pair(time, word) }.first()
 
-                if (isSameDay(lastFetchTime) && cachedWord != null) {
+                // Check if the cached word is from today and if the API has updated the WOD
+                if (isSameDay(lastFetchTime) && cachedWord != null && !isApiUpdateTimePassed()) {
+                    // Use cached word if it's from today and the API update time hasn't passed
                     _wordOfTheDayState.value = WordOfTheDayState.Success(cachedWord)
                 } else {
+                    // Fetch new word if the cached word is outdated or the API update time has passed
                     fetchWordOfTheDay()
                 }
             } catch (e: Exception) {
@@ -70,8 +68,7 @@ class WordOfTheDayViewModel @Inject constructor(
      * Handles network errors and data parsing errors separately.
      */
     private fun fetchWordOfTheDay() {
-        fetchJob?.cancel()
-        fetchJob = viewModelScope.launch {
+        viewModelScope.launch {
             _wordOfTheDayState.value = WordOfTheDayState.Loading
             try {
                 val response = wordnikApiService.getWordOfTheDay()
@@ -87,10 +84,20 @@ class WordOfTheDayViewModel @Inject constructor(
                 )
 
             } catch (e: IOException) {
-                _wordOfTheDayState.value = WordOfTheDayState.Error(
-                    message = "Network error: ${e.localizedMessage}",
-                    type = ErrorType.NETWORK_ERROR
-                )
+                // If network fails, try to use the cached word if available
+                val (_, cachedWord) = combine(
+                    dataStoreManager.lastFetchTime,
+                    dataStoreManager.lastWord
+                ) { time, word -> Pair(time, word) }.first()
+
+                if (cachedWord != null) {
+                    _wordOfTheDayState.value = WordOfTheDayState.Success(cachedWord)
+                } else {
+                    _wordOfTheDayState.value = WordOfTheDayState.Error(
+                        message = "Network error: ${e.localizedMessage}",
+                        type = ErrorType.NETWORK_ERROR
+                    )
+                }
             } catch (e: Exception) {
                 _wordOfTheDayState.value = WordOfTheDayState.Error(
                     message = "Unexpected error: ${e.localizedMessage}",
@@ -115,6 +122,23 @@ class WordOfTheDayViewModel @Inject constructor(
             currentDay.get(Calendar.YEAR) == get(Calendar.YEAR) &&
                     currentDay.get(Calendar.DAY_OF_YEAR) == get(Calendar.DAY_OF_YEAR)
         }
+    }
+
+    /**
+     * Checks if the API update time for the Word of the Day has passed.
+     *
+     * @return true if the API update time has passed, false otherwise
+     */
+    private fun isApiUpdateTimePassed(): Boolean {
+        val calendar = Calendar.getInstance()
+        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = calendar.get(Calendar.MINUTE)
+
+        // Assuming the API updates the WOD at 12:00 PM (noon)
+        val apiUpdateHour = 7
+        val apiUpdateMinute = 0
+
+        return currentHour > apiUpdateHour || (currentHour == apiUpdateHour && currentMinute >= apiUpdateMinute)
     }
 }
 
