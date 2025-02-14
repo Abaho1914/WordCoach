@@ -5,7 +5,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.abahoabbott.wordcoach.features.game.nav.AppDestination
 import com.abahoabbott.wordcoach.features.wod.WordOfTheDayScreen
-import com.abahoabbott.wordcoach.features.wod.WordOfTheDayScreenContent
 
 fun NavGraphBuilder.wordOfTheDayDestination(
     navigateToGameScreen: () -> Unit
@@ -25,5 +24,9 @@ fun NavGraphBuilder.wordOfTheDayDestination(
  * Navigates the user to the "Word of the Day" (WoD) screen.
  */
 fun NavController.navigateToWoDScreen() {
-    navigate(AppDestination.WoD.route)
+    navigate(AppDestination.WoD.route) {
+        popUpTo(AppDestination.Splash.route) {
+            inclusive = true
+        }
+    }
 }

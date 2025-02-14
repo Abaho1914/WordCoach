@@ -36,6 +36,7 @@ fun WordCoachApp() {
             ) {
                 splashDestination {
                     navController.navigateToWoDScreen()
+
                 }
 
                 wordOfTheDayDestination {

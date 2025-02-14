@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abahoabbott.wordcoach.network.WordnikApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -23,42 +26,72 @@ import javax.inject.Inject
 @HiltViewModel
 class WordOfTheDayViewModel @Inject constructor(
     private val wordnikApiService: WordnikApiService,
-    private val dataStoreManager: DataStoreManager
+    private val dataStoreManager: DataStoreManager,
+    private val timeProvider: TimeProvider,
+    private val config: WordOfDayConfig = WordOfDayConfig()
 ) : ViewModel() {
 
     private val _wordOfTheDayState = MutableStateFlow<WordOfTheDayState>(WordOfTheDayState.Loading)
     val wordOfTheDayState: StateFlow<WordOfTheDayState> = _wordOfTheDayState
+
+
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        _wordOfTheDayState.value = WordOfTheDayState.Error(
+            message = throwable.localizedMessage ?: "Unknown error occurred",
+            type = when (throwable) {
+                is IOException -> ErrorType.NETWORK_ERROR
+                is IllegalStateException -> ErrorType.LOCAL_DATA_ERROR
+                else -> ErrorType.GENERIC_ERROR
+            }
+        )
+    }
 
     init {
         checkAndFetchWordOfTheDay()
     }
 
     /**
+     * Implements cache strategy logic
+     */
+    private suspend fun handleCacheStrategy() {
+        val currentTime = timeProvider.getCurrentTimeMillis()
+
+        val (lastFetchTime, cachedWord) = combine(
+            dataStoreManager.lastFetchTime,
+            dataStoreManager.lastWord
+        ) { time, word -> Pair(time, word) }.first()
+
+        when {
+            isCacheValid(lastFetchTime, currentTime) &&
+                    cachedWord != null &&
+                    !isApiUpdateTimePassed() -> {
+                _wordOfTheDayState.value = WordOfTheDayState.Success(
+                    wordOfTheDay = cachedWord,
+                    isFromCache = true,
+                    lastUpdated = lastFetchTime
+                )
+
+            }
+
+            else -> {
+                fetchWordOfTheDay()
+            }
+        }
+    }
+
+    /**
      * Checks cached data and fetches new word if needed.
-     * Optimizes network usage by checking cached data validity first.
      */
     private fun checkAndFetchWordOfTheDay() {
-        viewModelScope.launch {
+        viewModelScope.launch(coroutineExceptionHandler) {
             try {
-                // Combine both data store requests into a single operation
-                val (lastFetchTime, cachedWord) = combine(
-                    dataStoreManager.lastFetchTime,
-                    dataStoreManager.lastWord
-                ) { time, word -> Pair(time, word) }.first()
-
-                // Check if the cached word is from today and if the API has updated the WOD
-                if (isSameDay(lastFetchTime) && cachedWord != null && !isApiUpdateTimePassed()) {
-                    // Use cached word if it's from today and the API update time hasn't passed
-                    _wordOfTheDayState.value = WordOfTheDayState.Success(cachedWord)
-                } else {
-                    // Fetch new word if the cached word is outdated or the API update time has passed
-                    fetchWordOfTheDay()
-                }
+                handleCacheStrategy()
             } catch (e: Exception) {
                 _wordOfTheDayState.value = WordOfTheDayState.Error(
                     message = "Failed to load cached data: ${e.localizedMessage}",
                     type = ErrorType.LOCAL_DATA_ERROR
                 )
+
             }
         }
     }
@@ -67,88 +100,94 @@ class WordOfTheDayViewModel @Inject constructor(
      * Fetches the word of the day from the API and updates cache.
      * Handles network errors and data parsing errors separately.
      */
-    private fun fetchWordOfTheDay() {
-        viewModelScope.launch {
-            _wordOfTheDayState.value = WordOfTheDayState.Loading
-            try {
-                val response = wordnikApiService.getWordOfTheDay()
-                val wordOfTheDay = response.toWordOfTheDay()
-
-                // Update state before saving to cache to ensure UI responsiveness
-                _wordOfTheDayState.value = WordOfTheDayState.Success(wordOfTheDay)
-
-                // Atomic save operation for both word and timestamp
-                dataStoreManager.saveWordData(
-                    word = wordOfTheDay,
-                    timestamp = System.currentTimeMillis()
-                )
-
-            } catch (e: IOException) {
-                // If network fails, try to use the cached word if available
-                val (_, cachedWord) = combine(
-                    dataStoreManager.lastFetchTime,
-                    dataStoreManager.lastWord
-                ) { time, word -> Pair(time, word) }.first()
-
-                if (cachedWord != null) {
-                    _wordOfTheDayState.value = WordOfTheDayState.Success(cachedWord)
-                } else {
-                    _wordOfTheDayState.value = WordOfTheDayState.Error(
-                        message = "Network error: ${e.localizedMessage}",
-                        type = ErrorType.NETWORK_ERROR
+    private fun fetchWordOfTheDay(retryCount: Int = 3) {
+        viewModelScope.launch(coroutineExceptionHandler) {
+            var lastException: Exception? = null
+            repeat(retryCount) { attempt ->
+                try {
+                    val response = wordnikApiService.getWordOfTheDay()
+                    val wordOfTheDay = response.toWordOfTheDay()
+                    _wordOfTheDayState.value = WordOfTheDayState.Success(
+                        wordOfTheDay = wordOfTheDay,
+                        isFromCache = false,
+                        lastUpdated = System.currentTimeMillis()
                     )
+                    return@launch
+                } catch (e: Exception) {
+                    lastException = e
+                    if (attempt < retryCount - 1) {
+                        delay(1000L * (attempt + 1))
+                    }
                 }
-            } catch (e: Exception) {
-                _wordOfTheDayState.value = WordOfTheDayState.Error(
-                    message = "Unexpected error: ${e.localizedMessage}",
-                    type = ErrorType.GENERIC_ERROR
-                )
             }
+            handleFetchFailure(lastException)
         }
     }
 
     /**
-     * Checks if the given timestamp is from the same calendar day as current time.
-     *
-     * @param timestamp The timestamp to check in milliseconds
-     * @return true if the timestamp is from today, false otherwise
+     * Handles API fetch failures by attempting to use cached data
      */
-    private fun isSameDay(timestamp: Long): Boolean {
-        val calendar = Calendar.getInstance()
-        val currentDay = calendar.apply { timeInMillis = System.currentTimeMillis() }
+    private suspend fun handleFetchFailure(exception: Exception?) {
+        val (_, cachedWord) = combine(
+            dataStoreManager.lastFetchTime,
+            dataStoreManager.lastWord
+        ) { time, word -> Pair(time, word) }.first()
 
-        return calendar.run {
-            timeInMillis = timestamp
-            currentDay.get(Calendar.YEAR) == get(Calendar.YEAR) &&
-                    currentDay.get(Calendar.DAY_OF_YEAR) == get(Calendar.DAY_OF_YEAR)
+        if (cachedWord != null) {
+            _wordOfTheDayState.value = WordOfTheDayState.Success(
+                wordOfTheDay = cachedWord,
+                isFromCache = true,
+                lastUpdated = timeProvider.getCurrentTimeMillis()
+            )
+
+        } else {
+            _wordOfTheDayState.value = WordOfTheDayState.Error(
+                message = "Failed to fetch word: ${exception?.localizedMessage}",
+                type = when (exception) {
+                    is IOException -> ErrorType.NETWORK_ERROR
+                    else -> ErrorType.GENERIC_ERROR
+                },
+                cachedData = null
+            )
         }
     }
 
-    /**
-     * Checks if the API update time for the Word of the Day has passed.
-     *
-     * @return true if the API update time has passed, false otherwise
-     */
+    private fun isCacheValid(lastFetchTime: Long, currentTime: Long): Boolean =
+        currentTime - lastFetchTime < config.cacheThresholdMs
+
     private fun isApiUpdateTimePassed(): Boolean {
-        val calendar = Calendar.getInstance()
+        val calendar = timeProvider.getCurrentCalendar()
         val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
         val currentMinute = calendar.get(Calendar.MINUTE)
 
-        // Assuming the API updates the WOD at 12:00 PM (noon)
-        val apiUpdateHour = 7
-        val apiUpdateMinute = 0
+        return currentHour > config.apiUpdateHour ||
+                (currentHour == config.apiUpdateHour && currentMinute >= config.apiUpdateMinute)
+    }
 
-        return currentHour > apiUpdateHour || (currentHour == apiUpdateHour && currentMinute >= apiUpdateMinute)
+
+    override fun onCleared() {
+        super.onCleared()
+        viewModelScope.cancel()
     }
 }
+
 
 /**
  * Represents the state of word of the day data loading.
  */
 sealed class WordOfTheDayState {
     object Loading : WordOfTheDayState()
-    data class Success(val wordOfTheDay: WordOfTheDay) : WordOfTheDayState()
-    data class Error(val message: String, val type: ErrorType) : WordOfTheDayState()
+    data class Success(
+        val wordOfTheDay: WordOfTheDay,
+        val isFromCache: Boolean,
+        val lastUpdated: Long
+    ) : WordOfTheDayState()
+
+    data class Error(
+        val message: String,
+        val type: ErrorType,
+        val cachedData: WordOfTheDay? = null
+    ) : WordOfTheDayState()
 }
 
 /**

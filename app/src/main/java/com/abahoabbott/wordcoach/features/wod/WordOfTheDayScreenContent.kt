@@ -1,5 +1,11 @@
 package com.abahoabbott.wordcoach.features.wod
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -104,53 +110,80 @@ fun WordOfTheDayScreenContent(
 
     val scrollState = rememberScrollState()
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
-
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(16.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp)
             .safeDrawingPadding()
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(8.dp, shape = RoundedCornerShape(16.dp)),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                // Header
-                HeaderSection(dateFormatter)
-
-
-                Spacer(Modifier.height(32.dp))
-
-                // Word Section
-                Text(
-                    text = wordOfTheDay.word.replaceFirstChar { it.uppercase() },
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    modifier = Modifier.align(Alignment.Start)
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(
+                initialAlpha = 0.3f
+            ) + expandVertically(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
                 )
+            )
+        ) {
 
-                Spacer(Modifier.height(8.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(
+                        12.dp,
+                        shape = RoundedCornerShape(28.dp),
+                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                        ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                ),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(28.dp)
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        )
+                ) {
+                    // Header
+                    HeaderSection(dateFormatter)
+                    Spacer(Modifier.height(32.dp))
+                    // Word Section
+                    Text(
+                        text = wordOfTheDay.word.replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.displayMedium.copy(
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        modifier = Modifier.align(Alignment.Start)
+                    )
 
-                // Pronunciation
-                PronunciationSection(wordOfTheDay)
+                    Spacer(Modifier.height(8.dp))
 
-                Spacer(Modifier.height(32.dp))
+                    // Pronunciation
+                    PronunciationSection(wordOfTheDay)
 
-                DefinitionAndUsageSection( wordOfTheDay)
+                    Spacer(Modifier.height(32.dp))
 
-                Spacer(Modifier.height(24.dp))
+                    DefinitionAndUsageSection(wordOfTheDay)
 
-                // Game Button
-                PlayGameButton(onNavigateToGame)
+                    Spacer(Modifier.height(24.dp))
+
+                    // Game Button
+                    PlayGameButton(onNavigateToGame)
+                }
             }
         }
 
@@ -158,7 +191,15 @@ fun WordOfTheDayScreenContent(
 
         // Social Actions
         SocialActionsRow()
+
     }
+
+    WordnikCreditSection(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth()
+    )
+}
 }
 
 

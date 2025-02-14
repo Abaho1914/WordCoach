@@ -5,35 +5,32 @@
     android:viewportWidth="100"
     android:viewportHeight="100">
 
-    <!-- Background circle -->
+    <!-- Background Circle -->
     <path
-        android:fillColor="#2196F3"
+        android:fillColor="#1D2E28"
         android:pathData="M50,5 A45,45 0 1,1 49.9999,95 A45,45 0 1,1 50,5" />
 
-    <!-- Progress ring -->
-    <path
-        android:strokeColor="#E0E0E0"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:pathData="M50,5 A45,45 0 1,1 49.9999,5" />
-
-    <!-- W letter -->
+    <!-- Enhanced "W" for Word Coach -->
     <path
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="6"
+        android:strokeWidth="7"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M35,30 L45,65 L50,45 L55,65 L65,30" />
+        android:pathData="M30,35 L40,70 L50,45 L60,70 L70,35" />
 
-    <!-- Graduation cap -->
+    <!-- Open Book Icon -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineJoin="round"
+        android:fillAlpha="0.8"
+        android:pathData="M30,75 Q50,60 70,75 L70,80 Q50,65 30,80 Z" />
+
+    <!-- Refined Graduation Cap -->
     <path
         android:fillColor="#FFFFFF"
         android:fillAlpha="0.9"
-        android:pathData="M25,35 L75,35 L50,25 Z" />
+        android:pathData="M30,30 L70,30 L50,18 L30,30 Z" />
 
-    <!-- Book pages -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillAlpha="0.9"
-        android:pathData="M30,70 C40,65 60,65 70,70 L70,75 C60,70 40,70 30,75 Z" />
+
 </vector>
