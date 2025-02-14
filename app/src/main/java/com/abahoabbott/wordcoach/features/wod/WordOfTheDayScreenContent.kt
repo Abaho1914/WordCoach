@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abahoabbott.wordcoach.R
+import com.abahoabbott.wordcoach.features.wod.work.NewViewModel
 import com.abahoabbott.wordcoach.network.data.Definition
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 import java.text.SimpleDateFormat
@@ -55,7 +56,7 @@ import java.util.Locale
 @Composable
 fun WordOfTheDayScreen(
     onNavigateToGame: () -> Unit,
-    viewModel: WordOfTheDayViewModel = hiltViewModel()
+    viewModel: NewViewModel = hiltViewModel()
 ) {
     val state by viewModel.wordOfTheDayState.collectAsStateWithLifecycle()
 

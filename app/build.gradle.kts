@@ -92,14 +92,14 @@ dependencies {
     ksp(libs.hilt.android.compiler)
 
     //retrofit
-   // implementation "com.squareup.retrofit2:retrofit:2.9.0"
- //   implementation "com.squareup.retrofit2:converter-gson:2.9.0"
- //   implementation "com.squareup.okhttp3:logging-interceptor:4.9.3"
+    // implementation "com.squareup.retrofit2:retrofit:2.9.0"
+    //   implementation "com.squareup.retrofit2:converter-gson:2.9.0"
+    //   implementation "com.squareup.okhttp3:logging-interceptor:4.9.3"
     // Retrofit
     implementation(libs.retrofit)
 // Retrofit with Scalar Converter
     implementation(libs.converter.scalars)
-    implementation (libs.converter.gson)
+    implementation(libs.converter.gson)
 // Retrofit with Kotlin serialization Converter
     implementation(libs.logging.interceptor)
     implementation(libs.retrofit2.kotlinx.serialization.converter)
@@ -107,6 +107,11 @@ dependencies {
 
     //serialization
     implementation(libs.kotlinx.serialization.json)
-    implementation (libs.lottie.compose)
+    implementation(libs.lottie.compose)
 
+    // WorkManager dependency
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.startup.runtime)
 }
