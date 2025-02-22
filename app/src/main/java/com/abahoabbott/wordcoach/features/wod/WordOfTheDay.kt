@@ -19,21 +19,32 @@ data class WordOfTheDay(
     val word: String,
     val pronunciation: String,
     val definition: Definition,
-    val examples: List<String>,
+    val examples: List<Example>,
+    val publishDate: String,
+    val note: String
 )
 
+@Serializable
+data class Example(
+    val text: String,
+    val title: String
+)
 
 fun WordOfTheDayResponse.toWordOfTheDay(): WordOfTheDay {
     return WordOfTheDay(
         word = this.word,
         pronunciation = "[ˈbalzəˌrin]",
-        definition =this.definitions.first(),
-        examples = this.examples.map { it.text },
+        definition = this.definitions.first(),
+        examples =this.examples.map { Example(it.text, it.title) },
+        publishDate = this.publishDate,
+        note = this.note
     )
 }
+
+
 /**
-* Configuration for Word of the Day feature
-*/
+ * Configuration for Word of the Day feature
+ */
 data class WordOfDayConfig(
     val apiUpdateHour: Int = 7,
     val apiUpdateMinute: Int = 0,
@@ -51,6 +62,6 @@ interface TimeProvider {
 
 class RealTimeProvider @Inject constructor() : TimeProvider {
     override fun getCurrentTimeMillis() = System.currentTimeMillis()
-    override fun getCurrentCalendar() = Calendar.getInstance()
+    override fun getCurrentCalendar(): Calendar = Calendar.getInstance()
 }
 

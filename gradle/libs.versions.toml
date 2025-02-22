@@ -1,5 +1,5 @@
 [versions]
-agp = "8.10.0-alpha04"
+agp = "8.10.0-alpha06"
 converterScalars = "2.9.0"
 datastorePreferences = "1.1.1"
 hiltWork = "1.2.0"
@@ -26,6 +26,7 @@ retrofit2KotlinxSerializationConverter = "1.0.0"
 roomCompiler = "2.6.1"
 startupRuntime = "1.2.0"
 workRuntimeKtx = "2.10.0"
+workRuntimeKtxVersion = "2.8.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -34,6 +35,7 @@ androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref =
 androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltWork" }
 androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startupRuntime" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
+androidx-work-runtime-ktx-v281 = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtxVersion" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterScalars" }
 converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "converterScalars" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

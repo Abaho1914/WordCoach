@@ -2,8 +2,14 @@ package com.abahoabbott.wordcoach.features.wod
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
@@ -14,9 +20,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -31,18 +39,20 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abahoabbott.wordcoach.R
@@ -70,7 +80,7 @@ fun WordOfTheDayScreen(
 
             is WordOfTheDayState.Error -> ErrorScreen(
                 message = currentState.message,
-                onRetry = { }
+                onRetry = { viewModel.refresh()}
             )
         }
     }
@@ -78,31 +88,32 @@ fun WordOfTheDayScreen(
 
 @Composable
 fun LoadingScreen() {
+    rememberInfiniteTransition()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.surface)
+            .statusBarsPadding()
+            .navigationBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(32.dp)
+        ) {
 
-            CircularProgressIndicator()
-            Spacer(Modifier.height(24.dp))
-            Text(
-                text = "Fetching Today's Special Word",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                strokeWidth = 3.dp,
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "Did you know? We add new words every day!",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            )
+
+
         }
     }
 }
-
 @Composable
 fun WordOfTheDayScreenContent(
     wordOfTheDay: WordOfTheDay,
@@ -120,7 +131,7 @@ fun WordOfTheDayScreenContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp)
+            .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 60.dp)
             .safeDrawingPadding()
     ) {
         AnimatedVisibility(
@@ -150,13 +161,8 @@ fun WordOfTheDayScreenContent(
                 shape = RoundedCornerShape(28.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(28.dp)
-                        .animateContentSize(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
-                            )
-                        )
+                    modifier = Modifier.padding(16.dp)
+//
                 ) {
                     // Header
                     HeaderSection(dateFormatter)
@@ -175,11 +181,9 @@ fun WordOfTheDayScreenContent(
 
                     // Pronunciation
                     PronunciationSection(wordOfTheDay)
-
-                    Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(16.dp))
 
                     DefinitionAndUsageSection(wordOfTheDay)
-
                     Spacer(Modifier.height(24.dp))
 
                     // Game Button
@@ -220,11 +224,10 @@ private fun WordOfTheDayScreenPreview() {
                         "sample definition",
                         "",
                         "verb"
-                    ) ,
-                    examples = listOf(
-                        "The repetitive tasks stultified the team's creativity.",
-                        "Bureaucratic red tape can stultify innovation."
-                    )
+                    ),
+                    examples =emptyList(),
+                    publishDate = "",
+                    note = ""
                 ),
                 onNavigateToGame = {}
             )

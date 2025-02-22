@@ -1,11 +1,13 @@
 package com.abahoabbott.wordcoach.features.wod
 
 import android.content.Context
+import androidx.datastore.dataStore
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.abahoabbott.wordcoach.features.wod.DataStoreManager.PreferencesKeys.LAST_FETCH_DATE
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -33,8 +35,8 @@ class DataStoreManager(private val context: Context) {
      * Preference keys used for DataStore operations.
      */
     private object PreferencesKeys {
-        val LAST_FETCH_TIME = longPreferencesKey("last_fetch_time")
         val WORD_OF_THE_DAY = stringPreferencesKey("word_of_the_day")
+         val LAST_FETCH_DATE = longPreferencesKey("last_fetch_date")
     }
 
     /**
@@ -46,19 +48,6 @@ class DataStoreManager(private val context: Context) {
         ignoreUnknownKeys = true
         coerceInputValues = true
     }
-
-    /**
-     * Flow emitting the timestamp of the last successful word fetch.
-     *
-     * Emits:
-     * - 0L if no timestamp is stored
-     * - Latest timestamp as Long for successful fetches
-     *
-     * Automatically recovers from read errors by emitting empty preferences.
-     */
-    val lastFetchTime: Flow<Long> = context.dataStore.data
-        .catch { emit(emptyPreferences()) }
-        .map { it[PreferencesKeys.LAST_FETCH_TIME] ?: 0L }
 
     /**
      * Flow emitting the cached WordOfTheDay object if available.
@@ -83,18 +72,21 @@ class DataStoreManager(private val context: Context) {
             }
         }
 
+
+    val lastFetchDate: Flow<Long?> = context.dataStore.data
+        .map { it[LAST_FETCH_DATE] }
+
     /**
-     * Atomically saves both the word data and its associated timestamp.
+     * Atomically saves both the word data.
      *
      * @param word The WordOfTheDay object to store
-     * @param timestamp The epoch millis timestamp of when the word was fetched
      * @throws DataStoreOperationException if writing to DataStore fails
      */
-    suspend fun saveWordData(word: WordOfTheDay, timestamp: Long) {
+    suspend fun saveWordData(word: WordOfTheDay) {
         try {
             context.dataStore.edit { preferences ->
-                preferences[PreferencesKeys.LAST_FETCH_TIME] = timestamp
                 preferences[PreferencesKeys.WORD_OF_THE_DAY] = json.encodeToString(word)
+                preferences[LAST_FETCH_DATE] = System.currentTimeMillis()
             }
         } catch (e: IOException) {
             throw DataStoreOperationException("Failed to save word data", e)
@@ -111,7 +103,6 @@ class DataStoreManager(private val context: Context) {
      */
     suspend fun clearData() {
         context.dataStore.edit {
-            it.remove(PreferencesKeys.LAST_FETCH_TIME)
             it.remove(PreferencesKeys.WORD_OF_THE_DAY)
         }
     }

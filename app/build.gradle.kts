@@ -91,10 +91,6 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.android.compiler)
 
-    //retrofit
-    // implementation "com.squareup.retrofit2:retrofit:2.9.0"
-    //   implementation "com.squareup.retrofit2:converter-gson:2.9.0"
-    //   implementation "com.squareup.okhttp3:logging-interceptor:4.9.3"
     // Retrofit
     implementation(libs.retrofit)
 // Retrofit with Scalar Converter
