@@ -4,11 +4,14 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.work.WorkManager
+import com.abahoabbott.wordcoach.common.DateFormatter
+import com.abahoabbott.wordcoach.common.SimpleDateFormatter
 import com.abahoabbott.wordcoach.common.dataStore
 import com.abahoabbott.wordcoach.features.game.repository.GameRepository
 import com.abahoabbott.wordcoach.features.wod.DataStoreManager
 import com.abahoabbott.wordcoach.features.wod.work.WordOfTheDayRepository
 import com.abahoabbott.wordcoach.network.WordnikApiService
+import com.abahoabbott.wordcoach.room.WordsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -50,6 +53,9 @@ object AppModule {
         return GameRepository(dataStore)
     }
 
+    @Provides
+    fun provideDateFormatter(): DateFormatter = SimpleDateFormatter()
+
 
     /**
      * Provides a [WordOfTheDayRepository] instance.
@@ -62,13 +68,16 @@ object AppModule {
     @Singleton
     fun provideWordOfTheDayRepository(
         wordnikApiService: WordnikApiService,
-        dataStoreManager: DataStoreManager
+        wordsDao: WordsDao,
+        dateFormatter: DateFormatter
     ): WordOfTheDayRepository {
         return WordOfTheDayRepository(
-            dataStoreManager,
-            wordnikApiService
+            wordnikApiService,
+            wordsDao,
+            dateFormatter
         )
     }
+
 
     /**
      * Provides a [WorkManager] instance for managing background tasks.

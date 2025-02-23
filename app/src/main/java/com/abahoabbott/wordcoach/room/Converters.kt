@@ -1,6 +1,7 @@
 package com.abahoabbott.wordcoach.room
 
 import androidx.room.TypeConverter
+import com.abahoabbott.wordcoach.features.wod.Example
 import com.abahoabbott.wordcoach.network.data.Definition
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -8,6 +9,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class Converters {
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     @TypeConverter
     fun fromDefinition(definition: Definition): String {
@@ -20,14 +23,13 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromExamples(list: List<String>): String{
-        return Gson().toJson(list) as String
+    fun fromExamples(examples: List<Example>): String{
+        return json.encodeToString(examples)
     }
 
     @TypeConverter
-    fun toExamples(string: String?): List<String>{
-        val listType = object : TypeToken<List<String>>() {}.type
-        return Gson().fromJson(string,listType)
+    fun toExamples(string: String): List<Example>{
+        return json.decodeFromString(string)
     }
 
 }

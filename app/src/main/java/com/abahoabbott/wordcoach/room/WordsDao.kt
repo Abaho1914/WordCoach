@@ -16,16 +16,16 @@ interface WordsDao {
     @Update
     suspend fun update(wordOfTheDay: WordOfTheDayEntity)
 
-    @Query("SELECT * FROM word_of_the_day WHERE id = :id")
-    suspend fun getById(id: Long): WordOfTheDayEntity?
 
     @Query("SELECT * FROM word_of_the_day WHERE publishDate = :date")
-    suspend fun getByDate(date: String): WordOfTheDayEntity?
-
+    fun getWordByDate(date: String): Flow<WordOfTheDayEntity?>
     @Query("SELECT * FROM word_of_the_day ORDER BY publishDate DESC")
     fun getAll(): Flow<List<WordOfTheDayEntity>>
 
 
     @Delete
     suspend fun delete(wordOfTheDay: WordOfTheDayEntity)
+
+    @Query("DELETE FROM word_of_the_day")
+    suspend fun deleteAll()
 }

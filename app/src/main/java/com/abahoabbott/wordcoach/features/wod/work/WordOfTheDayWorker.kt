@@ -24,7 +24,7 @@ class WordOfTheDayWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
-            val result = repository.fetchWordOfDay(forceFetch = true)
+            val result = repository.fetchWordOfTheDay()
             if (result.isSuccess) {
                 scheduleNextDailyWork(applicationContext)
                 Result.success()

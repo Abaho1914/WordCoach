@@ -22,7 +22,7 @@ class NewViewModel @Inject constructor(
         }
 
         fun refresh() = viewModelScope.launch {
-            fetchWord(force = true)
+            fetchWord()
         }
 
         private fun loadWord() = viewModelScope.launch {
@@ -34,17 +34,14 @@ class NewViewModel @Inject constructor(
          *
          * This function retrieves the word of the day and updates the [_wordOfTheDayState] accordingly.
          * It first sets the state to [WordOfTheDayState.Loading], indicating that the word is being fetched.
-         * Then, it attempts to fetch the word from the repository using [repository.fetchWordOfDay].
+         * Then, it attempts to fetch the word from the repository using [repository.fetchWordOfTheDay()].
          *
          * If the fetch is successful, the state is updated to [WordOfTheDayState.Success] with the fetched word.
          * If the fetch fails, the state is updated to [WordOfTheDayState.Error] with the error message.
-         *
-         * @param force If true, forces the repository to fetch a new word, even if a cached one is available.
-         *              Defaults to false, meaning the repository may return a cached word if available.
          */
-        private suspend fun fetchWord(force: Boolean = false) {
+        private suspend fun fetchWord() {
             _wordOfTheDayState.value = WordOfTheDayState.Loading
-            repository.fetchWordOfDay(force).fold(
+            repository.fetchWordOfTheDay().fold(
                 onSuccess = { _wordOfTheDayState.value = WordOfTheDayState.Success(it) },
                 onFailure = { _wordOfTheDayState.value = WordOfTheDayState.Error(it.message.toString()) }
             )

@@ -1,12 +1,11 @@
 package com.abahoabbott.wordcoach.room
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import com.abahoabbott.wordcoach.features.wod.Example
+import com.abahoabbott.wordcoach.features.wod.WordOfTheDay
 import com.abahoabbott.wordcoach.network.data.Definition
-import com.abahoabbott.wordcoach.network.data.Example
 import kotlinx.serialization.Serializable
-
 
 
 @Serializable
@@ -16,9 +15,21 @@ data class WordOfTheDayEntity(
     val word: String,
     val pronunciation: String,
     val definition: Definition, // Will be stored as a JSON string using TypeConverter
-    val examples: List<String>,
-    val publishDate: String,
+    val examples: List<Example>,
+    var publishDate: String,
 )
 
+
+fun WordOfTheDay.toEntity(
+): WordOfTheDayEntity{
+    return WordOfTheDayEntity(
+        word = this.word,
+        pronunciation = this.pronunciation,
+        definition =this.definition,
+        examples = this.examples,
+        publishDate = this.publishDate
+    )
+
+}
 
 
