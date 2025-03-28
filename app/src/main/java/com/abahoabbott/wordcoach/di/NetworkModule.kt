@@ -1,9 +1,6 @@
 package com.abahoabbott.wordcoach.di
 
 import com.abahoabbott.wordcoach.BuildConfig
-import com.abahoabbott.wordcoach.features.wod.RealTimeProvider
-import com.abahoabbott.wordcoach.features.wod.TimeProvider
-import com.abahoabbott.wordcoach.features.wod.WordOfDayConfig
 import com.abahoabbott.wordcoach.network.WordnikApiService
 import dagger.Module
 import dagger.Provides
@@ -63,24 +60,6 @@ object NetworkModule {
     @Singleton
     fun provideWordnikApiService(retrofit: Retrofit): WordnikApiService {
         return retrofit.create(WordnikApiService::class.java)
-    }
-
-
-    @Provides
-    @Singleton
-    fun provideWordOfDayConfig(): WordOfDayConfig {
-        return WordOfDayConfig(
-            apiUpdateHour = 7,
-            apiUpdateMinute = 0,
-            cacheThresholdMs = 24 * 60 * 60 * 1000L,
-            maxRetries = 3
-        )
-    }
-
-    @Provides
-    @Singleton
-    fun provideTimeProvider(): TimeProvider {
-        return RealTimeProvider()
     }
 
 }

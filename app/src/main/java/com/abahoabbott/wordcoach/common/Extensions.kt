@@ -33,3 +33,4 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "ga
 
 
 const val LOG_TAG = "WordCoach"
+

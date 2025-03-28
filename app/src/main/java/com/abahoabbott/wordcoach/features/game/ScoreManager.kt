@@ -30,6 +30,3 @@ data class GameProgress(
 }
 
 
-class ScoreManager {
-}
-

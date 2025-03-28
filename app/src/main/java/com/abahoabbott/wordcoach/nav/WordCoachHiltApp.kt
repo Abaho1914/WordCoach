@@ -29,7 +29,7 @@ class WordCoachHiltApp : Application() {
 
         // Initialize WorkManager after injection
         initializeWorkManager()
-        scheduleDailyWordFetch()
+       // scheduleDailyWordFetch()
     }
 
     private fun initializeWorkManager() {

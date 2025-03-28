@@ -8,7 +8,6 @@ import com.abahoabbott.wordcoach.common.DateFormatter
 import com.abahoabbott.wordcoach.common.SimpleDateFormatter
 import com.abahoabbott.wordcoach.common.dataStore
 import com.abahoabbott.wordcoach.features.game.repository.GameRepository
-import com.abahoabbott.wordcoach.features.wod.DataStoreManager
 import com.abahoabbott.wordcoach.features.wod.work.WordOfTheDayRepository
 import com.abahoabbott.wordcoach.network.WordnikApiService
 import com.abahoabbott.wordcoach.room.WordsDao
@@ -60,8 +59,13 @@ object AppModule {
     /**
      * Provides a [WordOfTheDayRepository] instance.
      *
+     * This function constructs and returns a singleton instance of the [WordOfTheDayRepository].
+     * It depends on [WordnikApiService], [WordsDao], and [DateFormatter] to function.
+     * These dependencies are also provided by Dagger/Hilt.
+     *
      * @param wordnikApiService The API service for fetching word data.
-     * @param dataStoreManager The manager for caching word-of-the-day data.
+     * @param wordsDao The Data Access Object for interacting with the words database.
+     * @param dateFormatter The utility for formatting dates.
      * @return A singleton instance of [WordOfTheDayRepository].
      */
     @Provides
@@ -90,16 +94,4 @@ object AppModule {
         return WorkManager.getInstance(context)
     }
 
-
-    /**
-     * Provides a [DataStoreManager] instance for managing word-of-the-day data.
-     *
-     * @param context The application context, provided by Hilt.
-     * @return A singleton instance of [DataStoreManager].
-     */
-    @Provides
-    @Singleton
-    fun provideDataStoreManager(@ApplicationContext context: Context): DataStoreManager {
-        return DataStoreManager(context)
-    }
 }

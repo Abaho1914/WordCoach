@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [WordOfTheDayEntity::class], version = 1, exportSchema = false)
+@Database(entities = [WordOfTheDayEntity::class], version = 3, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class WordsDatabase : RoomDatabase() {
     abstract fun wordsDao(): WordsDao

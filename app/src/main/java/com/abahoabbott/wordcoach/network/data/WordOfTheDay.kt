@@ -2,7 +2,9 @@ package com.abahoabbott.wordcoach.network.data
 
 import kotlinx.serialization.Serializable
 
-// Data classes for API responses
+/**-----------------------------------
+ * Network Data Transfer Objects (DTOs)
+ * -----------------------------------*/
 data class WordOfTheDayResponse(
     val _id: String,
     val word: String,
@@ -15,11 +17,24 @@ data class WordOfTheDayResponse(
     val note: String
 )
 
+/**
+ * Represents a content provider from the Wordnik API
+ * @property name of the content provider
+ * @property id Unique identifier from the API
+ */
 data class ContentProvider(
     val name: String,
     val id: Int
 )
 
+
+/**
+ * Dictionary definition with source attribution
+ * @property source Dictionary or source identifier
+ * @property text Plain text definition
+ * @property note Optional editorial note
+ * @property partOfSpeech Grammatical classification
+ */
 @Serializable
 data class Definition(
     val source: String,
@@ -29,6 +44,13 @@ data class Definition(
 )
 
 
+/**
+ * Example usage from external sources
+ * @property url Original content URL
+ * @property title Title of source content
+ * @property text Actual example text
+ * @property id Unique identifier from API
+ */
 data class Example(
     val url: String,
     val title: String,

@@ -211,7 +211,8 @@ internal fun WordnikCreditSection(
  * @param dateFormatter The formatter used to format the current date.
  */
 @Composable
-internal fun HeaderSection(dateFormatter: SimpleDateFormat) {
+internal fun HeaderSection(dateFormatter: SimpleDateFormat,
+                           publishedDate: String) {
     Column(
         horizontalAlignment = Alignment.Start
     ) {
@@ -399,6 +400,7 @@ internal fun DefinitionAndUsageSection(
 @Composable
 internal fun WordOriginSectionPreview() {
     val wordOfTheDay = WordOfTheDay(
+        apiId ="",
         word = "Ephemeral",
         pronunciation = "/ɪˈfem.ər.əl/",
         definition = Definition(

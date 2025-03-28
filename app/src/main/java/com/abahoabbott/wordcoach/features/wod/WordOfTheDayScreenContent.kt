@@ -1,15 +1,9 @@
 package com.abahoabbott.wordcoach.features.wod
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
@@ -43,20 +37,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abahoabbott.wordcoach.R
-import com.abahoabbott.wordcoach.features.wod.work.NewViewModel
+import com.abahoabbott.wordcoach.features.wod.work.WordOfTheDayViewModel
 import com.abahoabbott.wordcoach.network.data.Definition
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 import java.text.SimpleDateFormat
@@ -66,7 +56,7 @@ import java.util.Locale
 @Composable
 fun WordOfTheDayScreen(
     onNavigateToGame: () -> Unit,
-    viewModel: NewViewModel = hiltViewModel()
+    viewModel: WordOfTheDayViewModel = hiltViewModel()
 ) {
     val state by viewModel.wordOfTheDayState.collectAsStateWithLifecycle()
 
@@ -80,7 +70,7 @@ fun WordOfTheDayScreen(
 
             is WordOfTheDayState.Error -> ErrorScreen(
                 message = currentState.message,
-                onRetry = { viewModel.refresh()}
+                onRetry = { viewModel.refresh() }
             )
         }
     }
@@ -99,7 +89,7 @@ fun LoadingScreen() {
         contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = CenterHorizontally,
             modifier = Modifier.padding(32.dp)
         ) {
 
@@ -114,6 +104,7 @@ fun LoadingScreen() {
         }
     }
 }
+
 @Composable
 fun WordOfTheDayScreenContent(
     wordOfTheDay: WordOfTheDay,
@@ -127,86 +118,88 @@ fun WordOfTheDayScreenContent(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 60.dp)
-            .safeDrawingPadding()
-    ) {
-        AnimatedVisibility(
-            visible = true,
-            enter = fadeIn(
-                initialAlpha = 0.3f
-            ) + expandVertically(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 60.dp)
+                .safeDrawingPadding()
         ) {
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(
-                        12.dp,
-                        shape = RoundedCornerShape(28.dp),
-                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                        ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                    ),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                ),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-//
-                ) {
-                    // Header
-                    HeaderSection(dateFormatter)
-                    Spacer(Modifier.height(32.dp))
-                    // Word Section
-                    Text(
-                        text = wordOfTheDay.word.replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.displayMedium.copy(
-                            fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier.align(Alignment.Start)
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(
+                    initialAlpha = 0.3f
+                ) + expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
                     )
+                )
+            ) {
 
-                    Spacer(Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            12.dp,
+                            shape = RoundedCornerShape(28.dp),
+                            spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                            ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+//
+                    ) {
+                        // Header
+                        HeaderSection(
+                            dateFormatter,
+                            wordOfTheDay.publishDate
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        // Word Section
+                        Text(
+                            text = wordOfTheDay.word.replaceFirstChar { it.uppercase() },
+                            style = MaterialTheme.typography.displayMedium.copy(
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier.align(Alignment.Start)
+                        )
 
-                    // Pronunciation
-                    PronunciationSection(wordOfTheDay)
-                    Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(8.dp))
 
-                    DefinitionAndUsageSection(wordOfTheDay)
-                    Spacer(Modifier.height(24.dp))
+                        // Pronunciation
+                        PronunciationSection(wordOfTheDay)
+                        Spacer(Modifier.height(16.dp))
 
-                    // Game Button
-                    PlayGameButton(onNavigateToGame)
+                        DefinitionAndUsageSection(wordOfTheDay)
+                        Spacer(Modifier.height(24.dp))
+
+                        // Game Button
+                        PlayGameButton(onNavigateToGame)
+                    }
                 }
             }
+
+            Spacer(Modifier.height(24.dp))
+
+            // Social Actions
+            SocialActionsRow()
+
         }
 
-        Spacer(Modifier.height(24.dp))
-
-        // Social Actions
-        SocialActionsRow()
-
+        WordnikCreditSection(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+        )
     }
-
-    WordnikCreditSection(
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .fillMaxWidth()
-    )
 }
-}
-
 
 
 // Preview with sample data
@@ -217,6 +210,7 @@ private fun WordOfTheDayScreenPreview() {
         Surface {
             WordOfTheDayScreenContent(
                 wordOfTheDay = WordOfTheDay(
+                    apiId = "",
                     word = "stultify",
                     pronunciation = "[ stuhl-tvh-fahy ]",
                     definition = Definition(
@@ -225,7 +219,7 @@ private fun WordOfTheDayScreenPreview() {
                         "",
                         "verb"
                     ),
-                    examples =emptyList(),
+                    examples = emptyList(),
                     publishDate = "",
                     note = ""
                 ),
@@ -274,7 +268,7 @@ fun ErrorScreen(message: String, onRetry: () -> Unit) {
                 contentColor = MaterialTheme.colorScheme.onErrorContainer
             ),
 
-        ) {
+            ) {
             Text("Retry", style = MaterialTheme.typography.labelLarge)
         }
     }

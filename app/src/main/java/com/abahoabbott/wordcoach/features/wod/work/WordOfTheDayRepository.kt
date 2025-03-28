@@ -8,8 +8,9 @@ import com.abahoabbott.wordcoach.features.wod.toWordOfTheDay
 import com.abahoabbott.wordcoach.network.WordnikApiService
 import com.abahoabbott.wordcoach.room.WordOfTheDayEntity
 import com.abahoabbott.wordcoach.room.WordsDao
+import com.abahoabbott.wordcoach.room.toDomainModel
 import com.abahoabbott.wordcoach.room.toEntity
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 
 
 /**
@@ -25,66 +26,62 @@ class WordOfTheDayRepository(
     private val wordsDao: WordsDao,
     private val dateFormatter: DateFormatter
 ) {
-
     /**
-     * Fetches the Word of the Day from the local database. If the database is empty
-     * or does not contain today's word, a network call is made to fetch a new word.
-     *
-     * @return [Result] containing the [WordOfTheDay] if successful, or an error if an exception occurs.
+     * Gets today's word of the day, either from database if available or network if needed.
+     * This is the main entry point that handles the logic of where to get the word from.
      */
-    suspend fun fetchWordOfTheDay(): Result<WordOfTheDay> {
-        Log.i(LOG_TAG, "Fetching Word of the Day from database")
-
+    suspend fun getTodayWord(): Result<WordOfTheDay> {
         return try {
             val today = dateFormatter.getCurrentDate()
-            val currentWordEntity = wordsDao.getWordByDate(today).first()
+            val formattedToday = dateFormatter.convertToFixedTimeFormat(today)!!
+            Log.i(LOG_TAG, "FormattedToday: $formattedToday")
 
-            currentWordEntity?.let {
-                Log.i(LOG_TAG, "Current word found: $it")
-                return Result.success(it.toDomainModel())
+            // First try to get from database
+            val cachedWord = wordsDao.getWordByDate(formattedToday).firstOrNull()
+
+            if (cachedWord != null) {
+                Log.i(LOG_TAG, "Found today's word in database")
+                Result.success(cachedWord.toDomainModel())
+            } else {
+                Log.i(LOG_TAG, "No word for today in database, fetching from network")
+                fetchWordFromNetwork()
             }
-
-            Log.i(LOG_TAG, "Current word not found in database, making network call")
-            fetchFromNetwork()
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "Error fetching Word of the Day: ${e.message}", e)
             Result.failure(e)
         }
     }
-
 
     /**
-     * Fetches the Word of the Day from the network and persists it to the database.
-     *
-     * @return [Result] containing the fetched [WordOfTheDay] if successful
+     * Explicitly fetches a fresh word from the network API.
+     * Should only be called when needed (e.g., manual refresh or missing word).
      */
-    private suspend fun fetchFromNetwork(): Result<WordOfTheDay> {
+    private suspend fun fetchWordFromNetwork(): Result<WordOfTheDay> {
         return try {
             val wordOfTheDay = wordnikApiService.getWordOfTheDay().toWordOfTheDay()
-            val entity = wordOfTheDay.toEntity().apply {
-                publishDate = dateFormatter.getCurrentDate()
+
+            //Double check that we don't already have this word
+            val existingWord = wordsDao.getWordByApiId(wordOfTheDay.apiId).firstOrNull()
+
+            if (existingWord != null) {
+                Log.i(LOG_TAG, "Word already exists in database")
+                Result.success(existingWord.toDomainModel())
+            } else {
+                // Insert the new word
+                wordsDao.insert(wordOfTheDay.toEntity())
+                Log.i(LOG_TAG, "New word fetched and saved to database")
+                Result.success(wordOfTheDay)
             }
-            wordsDao.insert(entity)
-            Log.i(LOG_TAG, "Successfully saved word to database")
-            Result.success(wordOfTheDay)
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "Network call failed: ${e.message}", e)
+            Log.e(LOG_TAG, "Error fetching word from network", e)
             Result.failure(e)
         }
     }
 
-}
-
-/**
- * Converts a [WordOfTheDayEntity] to a domain model [WordOfTheDay]
- */
-private fun WordOfTheDayEntity.toDomainModel(): WordOfTheDay {
-    return WordOfTheDay(
-        word = this.word,
-        pronunciation = this.pronunciation,
-        definition = this.definition,
-        examples = this.examples,
-        publishDate = this.publishDate,
-        note = this.definition.note ?: "Empty note"
-    )
+    /**
+     * Forces a refresh of today's word from the network.
+     * This is used for explicit refresh actions by the user.
+     */
+    suspend fun forceRefreshTodayWord(): Result<WordOfTheDay> {
+        return fetchWordFromNetwork()
+    }
 }
