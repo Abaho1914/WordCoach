@@ -29,7 +29,7 @@ class WordOfTheDayViewModel @Inject constructor(
      */
     private fun loadWord() = viewModelScope.launch {
         _wordOfTheDayState.value = WordOfTheDayState.Loading
-        repository.getTodayWord().fold(
+        repository.getLatestWordFromDatabase().fold(
             onSuccess = { _wordOfTheDayState.value = WordOfTheDayState.Success(it) },
             onFailure = { _wordOfTheDayState.value = WordOfTheDayState.Error(it.message ?: "Unknown error") }
         )

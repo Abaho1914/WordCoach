@@ -1,10 +1,8 @@
-package com.abahoabbott.wordcoach.room
+package com.abahoabbott.wordcoach.room.wod
 
 import androidx.room.TypeConverter
 import com.abahoabbott.wordcoach.features.wod.Example
 import com.abahoabbott.wordcoach.network.data.Definition
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 

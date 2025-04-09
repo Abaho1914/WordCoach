@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,10 +45,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abahoabbott.wordcoach.R
 import com.abahoabbott.wordcoach.common.modifyExplanationQuestion
 import com.abahoabbott.wordcoach.common.scoreBoardMessage
 import com.abahoabbott.wordcoach.features.game.GameResult
+import com.abahoabbott.wordcoach.features.game.new.GameManager
+import com.abahoabbott.wordcoach.features.game.new.WordCoachQuestion
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 
 
@@ -55,7 +60,8 @@ import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 fun ResultsScreen(
     gameResult: GameResult,
     onShareResults: () -> Unit = {},
-    onPlayAgain: () -> Unit = {}
+    onPlayAgain: () -> Unit = {},
+    viewModel: ResultsViewModel = hiltViewModel()
 ) {
     val resultsUiState = ResultsUiState(
         score = gameResult.totalScore,
@@ -63,10 +69,17 @@ fun ResultsScreen(
         attemptedQuestions = gameResult.attemptedQuestions
     )
 
+    LaunchedEffect(true) {
+        viewModel.loadResults(resultsUiState)
+    }
+
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
 
 
     ResultsScreenContent(
-        resultsUiState = resultsUiState,
+        resultsUiState = uiState,
         onShareResults = onShareResults,
         onPlayAgain = onPlayAgain
     )
@@ -150,7 +163,7 @@ private fun ResultsScreenLayout(
         LazyColumn {
             items(resultsUiState.attemptedQuestions) { question ->
                 ExplanationCard(
-                    question = question.question,
+                    question = GameManager.findQuestionById(question.questionId),
                     answerState = question.answerState
                 )
             }
@@ -165,7 +178,7 @@ private fun ResultsScreenLayout(
 @Composable
 private fun ExplanationCard(
     answerState: AnswerState = AnswerState.CORRECT,
-    question: String = ""
+    question: WordCoachQuestion = WordCoachQuestion()
 ) {
 
     var isExpanded by remember { mutableStateOf(false) }
@@ -187,7 +200,7 @@ private fun ExplanationCard(
             ) {
                 ExplanationIcon(answerState)
                 Text(
-                    modifyExplanationQuestion(question),
+                    modifyExplanationQuestion(GameManager.generateQuestion(question)),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Start,
                     modifier = Modifier.weight(1f)
@@ -224,12 +237,15 @@ private fun ExplanationCard(
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .padding(horizontal = 16.dp),
                         thickness = 1.dp,
                         color = Color.DarkGray
                     )
-                    ExpandedCardContent()
+                    ExpandedCardContent(
+                        question= question
+                    )
                 }
 
             }
@@ -294,23 +310,23 @@ private fun ResultsScreenPreview() {
                 totalQuestions = 5,
                 attemptedQuestions = listOf(
                     QuestionResult(
-                        "Which word is opposite of empty?",
+                        22,
                         AnswerState.CORRECT
                     ),
                     QuestionResult(
-                        "Which word is opposite of hot",
+                        22,
                         AnswerState.CORRECT
                     ),
                     QuestionResult(
-                        "Which word is opposite of clean",
+                        21,
                         AnswerState.WRONG
                     ),
                     QuestionResult(
-                        "Which word is opposite of start",
+                        22,
                         AnswerState.UNANSWERED
                     ),
                     QuestionResult(
-                        "Which word is opposite of happy",
+                        23,
                         AnswerState.CORRECT
                     )
                 )

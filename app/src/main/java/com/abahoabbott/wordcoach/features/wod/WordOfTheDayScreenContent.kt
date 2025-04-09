@@ -112,7 +112,6 @@ fun WordOfTheDayScreenContent(
 ) {
 
     val scrollState = rememberScrollState()
-    val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -157,7 +156,6 @@ fun WordOfTheDayScreenContent(
                     ) {
                         // Header
                         HeaderSection(
-                            dateFormatter,
                             wordOfTheDay.publishDate
                         )
                         Spacer(Modifier.height(16.dp))

@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.0"
+agp = "8.9.1"
 converterScalars = "2.9.0"
 datastorePreferences = "1.1.1"
 hiltWork = "1.2.0"

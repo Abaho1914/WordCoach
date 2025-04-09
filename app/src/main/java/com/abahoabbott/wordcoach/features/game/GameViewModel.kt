@@ -4,11 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abahoabbott.wordcoach.data.GameUiState
+import com.abahoabbott.wordcoach.features.game.new.WordCoachQuestion
 import com.abahoabbott.wordcoach.features.game.repository.GameRepository
 import com.abahoabbott.wordcoach.features.results.AnswerState
 import com.abahoabbott.wordcoach.features.results.QuestionResult
 import com.abahoabbott.wordcoach.nav.NavEvent
-import com.abahoabbott.wordcoach.network.WordnikApi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -41,7 +41,7 @@ class GameViewModel @Inject constructor(
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     //set of questions to be used in the game
-    private var toBeUsedQuestions: MutableList<WordQuestion> = mutableListOf()
+    private var toBeUsedQuestions: MutableList<WordCoachQuestion> = mutableListOf()
 
     //set of questions that the user has answered
     private var userAnswers: MutableList<QuestionResult> = mutableListOf()
@@ -58,10 +58,6 @@ class GameViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             resetCumulativeScore()
-            val wordOfTheDay = WordnikApi.retrofitService.getWordOfTheDay()
-          //  val randomWord = WordnikApi.retrofitService.getRandomWord()
-            Log.i("Sunflower:GameViewModel", "Word of the Day: $wordOfTheDay")
-          //  Log.i("Sunflower:GameViewModel", "Word of the Day: $randomWord")
         }
 
         resetGame()
@@ -169,10 +165,8 @@ class GameViewModel @Inject constructor(
     private suspend fun resetCumulativeScore() = gameRepository.resetCumulativeScore()
 
 
-    private fun pickNextQuestion(): WordQuestion {
+    private fun pickNextQuestion(): WordCoachQuestion {
         return gameRepository.getNextQuestion(
-            currentDifficulty,
-            usedQuestions = toBeUsedQuestions
         )
             .also {
                 toBeUsedQuestions.add(it)
@@ -206,7 +200,7 @@ class GameViewModel @Inject constructor(
     private fun updateQuestionResults(isCorrect: Boolean) {
         val answerState = if (isCorrect) AnswerState.CORRECT else AnswerState.WRONG
         val questionResult = QuestionResult(
-            question = _uiState.value.questionState.currentQuestion.question,
+            questionId = _uiState.value.questionState.currentQuestion.questionId,
             answerState = answerState
         )
         userAnswers.add(questionResult)
@@ -220,7 +214,7 @@ class GameViewModel @Inject constructor(
         //Update answer state to unanswered
         val questionResult =
             QuestionResult(
-                _uiState.value.questionState.currentQuestion.question,
+                _uiState.value.questionState.currentQuestion.questionId,
                 AnswerState.UNANSWERED
             )
         userAnswers.add(questionResult)

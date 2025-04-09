@@ -51,6 +51,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abahoabbott.wordcoach.R
 import com.abahoabbott.wordcoach.common.WordCoachOptionsButton
 import com.abahoabbott.wordcoach.data.GameUiState
+import com.abahoabbott.wordcoach.features.game.new.GameManager
+import com.abahoabbott.wordcoach.features.game.new.Option
+import com.abahoabbott.wordcoach.features.game.new.WordCoachQuestion
 import com.abahoabbott.wordcoach.nav.NavEvent
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 import kotlinx.coroutines.launch
@@ -138,7 +141,7 @@ private fun GameScreenContentColumn(
             exit = fadeOut() + shrinkVertically()
         ) {
             GameLayout(
-                question = uiState.questionState.currentQuestion,
+                currentQuestion = uiState.questionState.currentQuestion ,
                 selectedOptionId = uiState.questionState.selectedOptionId,
                 onOptionSelected = onOptionSelected
             )
@@ -271,7 +274,7 @@ private fun GameProgressBar(
 @Composable
 private fun GameLayout(
     modifier: Modifier = Modifier,
-    question: WordQuestion,
+    currentQuestion: WordCoachQuestion,
     selectedOptionId: Int?,
     onOptionSelected: (optionId: Int, isCorrect: Boolean) -> Unit,
 ) {
@@ -282,8 +285,10 @@ private fun GameLayout(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        val options = question.options
-        QuestionText(question.question)
+        val options = currentQuestion.options
+        QuestionText(
+            question = currentQuestion
+        )
         OptionsList(options, selectedOptionId, isAnswered, onOptionSelected)
 
     }
@@ -291,12 +296,12 @@ private fun GameLayout(
 
 @Composable
 private fun OptionsList(
-    options: GameOptions,
+    options: Pair<Option, Option>,
     selectedOptionId: Int?,
     isAnswered: Boolean,
     onOptionSelected: (Int, Boolean) -> Unit
 ) {
-    options.forEachIndexed { index, option ->
+    options.toList().forEachIndexed { index, option ->
         if (index > 0) {
             Text(
                 text = stringResource(R.string.or),
@@ -305,12 +310,12 @@ private fun OptionsList(
             )
         }
         WordCoachOptionsButton(
-            answerOption = option.text,
-            isAnswerCorrect = option.isCorrect,
+            answerOption = option.word,
+            isAnswerCorrect = option.optionId == selectedOptionId,
             isSelected = selectedOptionId == option.optionId,
             onClickButton = {
                 if (!isAnswered) {
-                    onOptionSelected(option.optionId, option.isCorrect)
+                    onOptionSelected(option.optionId, option.optionId == selectedOptionId)
                 }
             },
             isClickable = !isAnswered
@@ -319,10 +324,12 @@ private fun OptionsList(
 }
 
 @Composable
-private fun QuestionText(question: String) {
+private fun QuestionText(question: WordCoachQuestion) {
+
+    val myQuestion = GameManager.generateQuestion(question)
 
     val annotatedString = buildAnnotatedString {
-        val words = question.split(" ")
+        val words = myQuestion.split(" ")
         words.forEachIndexed { index, word ->
             val style = when {
                 word.equals(
@@ -357,7 +364,7 @@ private fun GameScreenPreview() {
             GameScreenContent(
                 uiState = GameUiState(
                     questionState = QuestionState(
-                        currentQuestion = allQuestions.random()
+                        currentQuestion = GameManager.listOfQuestions.random()
                     ),
                     scoreState = ScoreState(
                         score = 360,

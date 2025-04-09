@@ -1,5 +1,7 @@
 package com.abahoabbott.wordcoach.features.game
 
+import com.abahoabbott.wordcoach.features.game.new.WordCoachQuestion
+
 
 /**
  * Manages the user's score and the number of passed questions
@@ -13,7 +15,7 @@ data class ScoreState(
  * Tracks the current question and the user's selected option
  */
 data class QuestionState(
-    val currentQuestion: WordQuestion = WordQuestion(),
+    val currentQuestion: WordCoachQuestion = WordCoachQuestion(),
     val selectedOptionId: Int? = null
 )
 

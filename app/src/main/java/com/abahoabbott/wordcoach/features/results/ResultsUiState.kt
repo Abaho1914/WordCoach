@@ -13,7 +13,7 @@ data class ResultsUiState(
 
 @Serializable
 data class QuestionResult(
-    val question: String,
+    val questionId: Int,
     val answerState: AnswerState
 )
 

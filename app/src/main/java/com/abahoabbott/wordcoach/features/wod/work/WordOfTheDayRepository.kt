@@ -6,10 +6,9 @@ import com.abahoabbott.wordcoach.common.LOG_TAG
 import com.abahoabbott.wordcoach.features.wod.WordOfTheDay
 import com.abahoabbott.wordcoach.features.wod.toWordOfTheDay
 import com.abahoabbott.wordcoach.network.WordnikApiService
-import com.abahoabbott.wordcoach.room.WordOfTheDayEntity
-import com.abahoabbott.wordcoach.room.WordsDao
-import com.abahoabbott.wordcoach.room.toDomainModel
-import com.abahoabbott.wordcoach.room.toEntity
+import com.abahoabbott.wordcoach.room.wod.WordsDao
+import com.abahoabbott.wordcoach.room.wod.toDomainModel
+import com.abahoabbott.wordcoach.room.wod.toEntity
 import kotlinx.coroutines.flow.firstOrNull
 
 
@@ -26,30 +25,6 @@ class WordOfTheDayRepository(
     private val wordsDao: WordsDao,
     private val dateFormatter: DateFormatter
 ) {
-    /**
-     * Gets today's word of the day, either from database if available or network if needed.
-     * This is the main entry point that handles the logic of where to get the word from.
-     */
-    suspend fun getTodayWord(): Result<WordOfTheDay> {
-        return try {
-            val today = dateFormatter.getCurrentDate()
-            val formattedToday = dateFormatter.convertToFixedTimeFormat(today)!!
-            Log.i(LOG_TAG, "FormattedToday: $formattedToday")
-
-            // First try to get from database
-            val cachedWord = wordsDao.getWordByDate(formattedToday).firstOrNull()
-
-            if (cachedWord != null) {
-                Log.i(LOG_TAG, "Found today's word in database")
-                Result.success(cachedWord.toDomainModel())
-            } else {
-                Log.i(LOG_TAG, "No word for today in database, fetching from network")
-                fetchWordFromNetwork()
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
     /**
      * Explicitly fetches a fresh word from the network API.
@@ -83,5 +58,21 @@ class WordOfTheDayRepository(
      */
     suspend fun forceRefreshTodayWord(): Result<WordOfTheDay> {
         return fetchWordFromNetwork()
+    }
+
+    suspend fun getLatestWordFromDatabase(): Result<WordOfTheDay>{
+        return try {
+            val currentWord = wordsDao.getMostRecentWord().firstOrNull()
+            if (currentWord != null){
+                Result.success(currentWord.toDomainModel())
+            } else{
+                Result.failure(Exception("There is no word in database"))
+            }
+
+        }
+        catch (e: Exception){
+            Result.failure(e)
+        }
+
     }
 }

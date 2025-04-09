@@ -1,4 +1,4 @@
-package com.abahoabbott.wordcoach.room
+package com.abahoabbott.wordcoach.room.wod
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

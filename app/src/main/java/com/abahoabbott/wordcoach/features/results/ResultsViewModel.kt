@@ -1,30 +1,23 @@
 package com.abahoabbott.wordcoach.features.results
 
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
-class ResultsViewModel(): ViewModel(){
+
+@HiltViewModel
+class ResultsViewModel @Inject constructor(): ViewModel(){
 
     private val _uiState = MutableStateFlow(ResultsUiState())
     val uiState: StateFlow<ResultsUiState> = _uiState
 
 
-    fun updateResults(
-        score: Int,
-        correctAnswers: Int,
-        questionResults: List<QuestionResult>
-    ){
-        _uiState.value  = ResultsUiState(
-            score = score,
-            correctAnswers = correctAnswers,
-            attemptedQuestions = questionResults,
-            totalQuestions = 5
-        )
+
+    fun loadResults(resultsUiState: ResultsUiState){
+        _uiState.value = resultsUiState
     }
 
-    fun playAgain(){
-
-    }
 
 }

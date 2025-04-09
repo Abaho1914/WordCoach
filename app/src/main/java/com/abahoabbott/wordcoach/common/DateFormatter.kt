@@ -17,6 +17,8 @@ interface DateFormatter {
     fun parseApiDate(apiDate: String): String?
     fun parseIsoDate(isoDateString: String): Date
     fun convertToFixedTimeFormat(dateStr: String): String?
+
+    fun convertToWordOfTheDayFormat(apiDate: String): String?
 }
 
 class SimpleDateFormatter(): DateFormatter {
@@ -25,9 +27,23 @@ class SimpleDateFormatter(): DateFormatter {
         timeZone = TimeZone.getTimeZone("UTC")
     }
 
+    private val wordOfTheDayFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+
     private val apiDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
+
+    override fun convertToWordOfTheDayFormat(apiDate: String): String? {
+        return try {
+            apiDateFormat.parse(apiDate)?.let(wordOfTheDayFormat::format)
+        } catch (e: ParseException) {
+            Log.e("DateFormatter", "Failed to parse date", e)
+            null
+        }
+    }
+
     override fun getCurrentDate(): String {
         return currentDateFormat.format(Date())
     }
@@ -43,14 +59,6 @@ class SimpleDateFormatter(): DateFormatter {
             val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
             sdf.timeZone = TimeZone.getTimeZone("UTC")
             sdf.parse(isoDateString) ?: Date()
-
-            // Option 2: Using DateTimeFormatter with Java 8+ API (API level 26+)
-            // Uncomment this and comment out the SimpleDateFormat option if using API 26+
-            /*
-            val formatter = DateTimeFormatter.ISO_DATE_TIME
-            val zonedDateTime = ZonedDateTime.parse(isoDateString, formatter)
-            Date.from(zonedDateTime.toInstant())
-            */
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error parsing date: $isoDateString", e)
             // Return current date as fallback

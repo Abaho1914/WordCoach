@@ -4,9 +4,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import com.abahoabbott.wordcoach.features.game.Difficulty
-import com.abahoabbott.wordcoach.features.game.WordQuestion
-import com.abahoabbott.wordcoach.features.game.allQuestions
+import com.abahoabbott.wordcoach.features.game.new.GameManager
+import com.abahoabbott.wordcoach.features.game.new.WordCoachQuestion
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -38,11 +37,8 @@ class GameRepository @Inject constructor(
 
     }
 
-    fun getNextQuestion(difficulty: Difficulty, usedQuestions: List<WordQuestion>): WordQuestion {
-        val remainingQuestions =
-            allQuestions.filter { it.difficulty == difficulty && it !in usedQuestions }
-      //  return remainingQuestions.random()
-        return allQuestions.random()
+    fun getNextQuestion(): WordCoachQuestion {
+        return GameManager.listOfQuestions.random()
     }
 
 }

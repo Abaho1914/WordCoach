@@ -49,9 +49,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.abahoabbott.wordcoach.R
+import com.abahoabbott.wordcoach.common.SimpleDateFormatter
 import com.abahoabbott.wordcoach.network.data.Definition
-import java.text.SimpleDateFormat
-import java.util.Date
 
 /**
  * Displays a row of social action buttons, such as sharing and saving the word.
@@ -207,12 +206,13 @@ internal fun WordnikCreditSection(
 
 /**
  * Displays the header section of the Word of the Day screen, including the title and date.
- *
- * @param dateFormatter The formatter used to format the current date.
  */
 @Composable
-internal fun HeaderSection(dateFormatter: SimpleDateFormat,
-                           publishedDate: String) {
+internal fun HeaderSection(
+    publishedDate: String
+) {
+    val dateFormatter = SimpleDateFormatter()
+    val date = dateFormatter.convertToWordOfTheDayFormat(publishedDate) ?: ""
     Column(
         horizontalAlignment = Alignment.Start
     ) {
@@ -224,7 +224,7 @@ internal fun HeaderSection(dateFormatter: SimpleDateFormat,
             )
         )
         Text(
-            text = dateFormatter.format(Date()),
+            text = date,
             style = MaterialTheme.typography.labelLarge.copy(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -284,7 +284,8 @@ internal fun DefinitionAndUsageSection(
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     var showAllExamples by remember { mutableStateOf(false) }
-    val visibleExamples = if (showAllExamples) wordOfTheDay.examples else wordOfTheDay.examples.take(2)
+    val visibleExamples =
+        if (showAllExamples) wordOfTheDay.examples else wordOfTheDay.examples.take(2)
 
     ElevatedCard(
         modifier = Modifier
@@ -294,7 +295,7 @@ internal fun DefinitionAndUsageSection(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
-        Column(modifier = Modifier.padding( 16.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "Definition & Usage",
@@ -373,7 +374,8 @@ internal fun DefinitionAndUsageSection(
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
-                                modifier = Modifier.padding(start = 16.dp))
+                                modifier = Modifier.padding(start = 16.dp)
+                            )
                         }
                     }
 
@@ -396,11 +398,12 @@ internal fun DefinitionAndUsageSection(
         }
     }
 }
+
 @Preview
 @Composable
 internal fun WordOriginSectionPreview() {
     val wordOfTheDay = WordOfTheDay(
-        apiId ="",
+        apiId = "",
         word = "Ephemeral",
         pronunciation = "/ɪˈfem.ər.əl/",
         definition = Definition(

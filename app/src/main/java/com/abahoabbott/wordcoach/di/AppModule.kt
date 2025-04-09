@@ -10,7 +10,7 @@ import com.abahoabbott.wordcoach.common.dataStore
 import com.abahoabbott.wordcoach.features.game.repository.GameRepository
 import com.abahoabbott.wordcoach.features.wod.work.WordOfTheDayRepository
 import com.abahoabbott.wordcoach.network.WordnikApiService
-import com.abahoabbott.wordcoach.room.WordsDao
+import com.abahoabbott.wordcoach.room.wod.WordsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

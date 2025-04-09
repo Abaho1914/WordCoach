@@ -5,14 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -30,8 +27,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.abahoabbott.wordcoach.R
+import com.abahoabbott.wordcoach.features.game.new.Category
+import com.abahoabbott.wordcoach.features.game.new.GameManager
+import com.abahoabbott.wordcoach.features.game.new.Option
+import com.abahoabbott.wordcoach.features.game.new.WordCoachQuestion
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
 import com.abahoabbott.wordcoach.ui.theme.correctAnswerColor
 import com.abahoabbott.wordcoach.ui.theme.wrongAnswerColor
@@ -47,182 +49,205 @@ private fun CustomProgressBarPreview() {
     }
 }
 
+/**
+ * A circular progress indicator that displays the user's score.
+ *
+ * @param correctAnswers Number of correctly answered questions
+ * @param totalQuestions Total number of questions in the quiz
+ * @param modifier Optional modifier for styling/layout
+ * @param progressColor Color for the progress indicator (defaults to correct answer color)
+ * @param textColor Color for the score text (defaults to onSurface)
+ */
 @Composable
 fun CustomProgressBar(
     correctAnswers: Int = 4,
-    totalQuestions: Int = 5
+    totalQuestions: Int = 5,
+    modifier: Modifier = Modifier,
+    progressColor: Color = correctAnswerColor,
+    textColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
-
-    val myProgress = remember(correctAnswers, totalQuestions) {
-        correctAnswers.toFloat() / totalQuestions
+    val progress = remember(correctAnswers, totalQuestions) {
+        if (totalQuestions > 0) correctAnswers.toFloat() / totalQuestions else 0f
     }
+
     val animatedProgress by animateFloatAsState(
-        targetValue = myProgress,
-        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+        targetValue = progress,
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+        label = "progressAnimation"
     )
 
-
     Box(
-        modifier = Modifier.padding(vertical = 24.dp),
+        modifier = modifier
+            .padding(vertical = 24.dp)
+            .size(120.dp),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(
-            modifier = Modifier
-                .size(120.dp),
-            progress = {
-                animatedProgress
-            },
-            color = Color(0xFF4CAF50),
-            strokeWidth = 8.dp
+            progress = { animatedProgress },
+            color = progressColor,
+            strokeWidth = 8.dp,
+            modifier = Modifier.fillMaxSize()
         )
-        Text(
-            //  modifier = Modifier.align(Alignment.Center),
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.headlineMedium,
-            text = "$correctAnswers/$totalQuestions"
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "$correctAnswers/$totalQuestions",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = textColor
+            )
+        }
     }
-
-
 }
 
+/**
+ * Displays an icon indicating answer state (correct, wrong, or unanswered).
+ *
+ * @param answerState The state of the answer (CORRECT, WRONG, UNANSWERED)
+ * @param modifier Optional modifier for styling/layout
+ * @param size Size of the icon (default 24dp)
+ */
 @Composable
-fun ExplanationIcon(answerState: AnswerState) {
-    val icon = when (answerState) {
-        AnswerState.CORRECT -> Icon(
-            painter = painterResource(R.drawable.round_check_24),
-            contentDescription = null,
-            tint = correctAnswerColor
-
-        )
-
-        AnswerState.WRONG -> Icon(
-            painter = painterResource(R.drawable.baseline_clear_24),
-            contentDescription = null,
-            tint = wrongAnswerColor
-        )
-
-        AnswerState.UNANSWERED -> Icon(
-            painter = painterResource(R.drawable.baseline_question_mark_24),
-            contentDescription = null,
-            tint = Color.Gray
-        )
+fun ExplanationIcon(
+    answerState: AnswerState,
+    modifier: Modifier = Modifier,
+    size: Dp = 24.dp
+) {
+    val (iconRes, tint) = when (answerState) {
+        AnswerState.CORRECT -> R.drawable.round_check_24 to correctAnswerColor
+        AnswerState.WRONG -> R.drawable.baseline_clear_24 to wrongAnswerColor
+        AnswerState.UNANSWERED -> R.drawable.baseline_question_mark_24 to Color.Gray
     }
-    return icon
+
+    Icon(
+        painter = painterResource(iconRes),
+        contentDescription = when (answerState) {
+            AnswerState.CORRECT -> "Correct answer"
+            AnswerState.WRONG -> "Wrong answer"
+            AnswerState.UNANSWERED -> "Unanswered question"
+        },
+        tint = tint,
+        modifier = modifier.size(size)
+    )
 }
 
 @Composable
 fun ExpandedCardContent(
-    selectedOption: String? = "communicate"
-) {
-
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-            .wrapContentSize(),
+    modifier: Modifier = Modifier,
+    question: WordCoachQuestion = WordCoachQuestion(),
     ) {
-        val options = listOf("communicate", "comprise")
+    Column(
+        modifier = modifier
+            .padding(16.dp)
+            .fillMaxWidth()
+    ) {
 
+        val text = if (question.category == Category.OPPOSITE) "opposite of" else "similar to"
+        Text(
+            text = "Word $text ${question.questionWord.word}",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
+            thickness = 1.dp
+        )
+        val options = question.options.toList()
+        // Options list
         options.forEach { option ->
+            val isCorrect = option.optionId == 21
+
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(vertical = 4.dp)
             ) {
                 Icon(
-                    imageVector = if (selectedOption == option) Icons.Default.Check else Icons.Default.Close,
-                    contentDescription = null,
-                    tint = if (selectedOption == option) correctAnswerColor else wrongAnswerColor
+                    painter = painterResource(
+                        id = if (isCorrect) R.drawable.round_check_24 else R.drawable.baseline_clear_24
+                    ),
+                    contentDescription = if (isCorrect) "Correct" else "Incorrect",
+                    tint = if (isCorrect) correctAnswerColor else wrongAnswerColor,
+                    modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    text = option,
-                    color = if (selectedOption == option) correctAnswerColor else wrongAnswerColor,
-                    modifier = Modifier.padding(start = 8.dp)
+                    text = option.word,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color =
+                        if (isCorrect) correctAnswerColor else wrongAnswerColor,
+                    modifier = Modifier.padding(start = 12.dp)
                 )
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 1.dp,
-            color = Color.DarkGray
-        )
-        Spacer(modifier = Modifier.height(16.dp))
 
+        Spacer(modifier = Modifier.height(8.dp))
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
+            thickness = 1.dp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Learn why section
         Text(
             text = "LEARN WHY",
-            color = Color.Gray,
-            modifier = Modifier.padding(vertical = 16.dp)
-        )
-
-        // Definition section
-        Text(
-            text = "What's the definition of interact?",
-            color = Color.White,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             modifier = Modifier.padding(bottom = 8.dp)
         )
+        //Definition of main word
         Text(
-            text = "Act in such a way as to have an effect on another; act reciprocally.",
-            color = Color.Gray
+            text = "What is the definition of ${question.questionWord.word}?",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
         )
-        Text(
-            text = "For example: ",
-            color = Color.Gray,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Text(
-            text = "\"all the stages in the process interact\"",
-            color = Color.Gray,
-            fontStyle = FontStyle.Italic
-        )
-        // Similar word explanation
-        Text(
-            text = "How is communicate similar?",
-            color = Color.White,
-            modifier = Modifier.padding(vertical = 16.dp)
-        )
-        Text(
-            text = "The word communicate means share or exchange information, news, or ideas.",
-            color = Color.Gray
-        )
-        Text(
-            text = "For example: ",
-            color = Color.Gray,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Text(
-            text = "\"the prisoner was forbidden to communicate with his family\"",
-            color = Color.Gray,
-            fontStyle = FontStyle.Italic
-        )
+        WordDefinitionSection(question.questionWord)
 
-        // Different word explanation
+
+        // Correct answer explanation
         Text(
-            text = "How is comprise different?",
-            color = Color.White,
-            modifier = Modifier.padding(vertical = 16.dp)
+            text = "How is ${options.first().word} similar?",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
         )
+        WordDefinitionSection(options.first())
+
+        // Incorrect options explanations
+
         Text(
-            text = "The word comprise means consist of; be made up of.",
-            color = Color.Gray
+            text = "How is ${options.last().word} different?",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
         )
-        Text(
-            text = "For example: ",
-            color = Color.Gray,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Text(
-            text = "\"the country comprises twenty states\"",
-            color = Color.Gray,
-            fontStyle = FontStyle.Italic
-        )
+        WordDefinitionSection(options.last())
     }
-
 }
 
+@Composable
+private fun WordDefinitionSection(
+    option: Option
+) {
+    Text(
+        text = option.definition,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+    )
+    Text(
+        text = "For example: ${option.example}",
+        style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
+}
+
+// Helper function to get examples (would come from your data source)
 @Preview
 @Composable
 fun ExpandedCardContentPreview() {
-    ExpandedCardContent()
+    WordCoachTheme {
+        Surface {
+            ExpandedCardContent()
+        }
+    }
 }
