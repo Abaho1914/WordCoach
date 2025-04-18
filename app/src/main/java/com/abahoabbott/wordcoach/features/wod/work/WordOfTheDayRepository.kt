@@ -10,6 +10,7 @@ import com.abahoabbott.wordcoach.room.wod.WordsDao
 import com.abahoabbott.wordcoach.room.wod.toDomainModel
 import com.abahoabbott.wordcoach.room.wod.toEntity
 import kotlinx.coroutines.flow.firstOrNull
+import timber.log.Timber
 
 
 /**
@@ -38,16 +39,16 @@ class WordOfTheDayRepository(
             val existingWord = wordsDao.getWordByApiId(wordOfTheDay.apiId).firstOrNull()
 
             if (existingWord != null) {
-                Log.i(LOG_TAG, "Word already exists in database")
+                Timber.tag(LOG_TAG).i("Word already exists in database")
                 Result.success(existingWord.toDomainModel())
             } else {
                 // Insert the new word
                 wordsDao.insert(wordOfTheDay.toEntity())
-                Log.i(LOG_TAG, "New word fetched and saved to database")
+                Timber.tag(LOG_TAG).i("New word fetched and saved to database")
                 Result.success(wordOfTheDay)
             }
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "Error fetching word from network", e)
+            Timber.tag(LOG_TAG).e(e, "Error fetching word from network")
             Result.failure(e)
         }
     }
