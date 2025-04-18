@@ -25,6 +25,7 @@ retrofit = "2.9.0"
 retrofit2KotlinxSerializationConverter = "1.0.0"
 roomCompiler = "2.6.1"
 startupRuntime = "1.2.0"
+timber = "5.0.1"
 workRuntimeKtx = "2.10.0"
 workRuntimeKtxVersion = "2.8.1"
 
@@ -64,6 +65,7 @@ lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit2-kotlinx-serialization-converter = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofit2KotlinxSerializationConverter" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 
 
 
