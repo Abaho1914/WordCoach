@@ -9,6 +9,7 @@ import androidx.work.WorkManager
 import com.abahoabbott.wordcoach.common.LOG_TAG
 import com.abahoabbott.wordcoach.features.wod.work.WordOfTheDayWorker
 import dagger.hilt.android.HiltAndroidApp
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -29,7 +30,7 @@ class WordCoachHiltApp : Application() {
 
         // Initialize WorkManager after injection
         initializeWorkManager()
-       // scheduleDailyWordFetch()
+        scheduleDailyWordFetch()
     }
 
     private fun initializeWorkManager() {
@@ -39,7 +40,7 @@ class WordCoachHiltApp : Application() {
     }
 
     private fun scheduleDailyWordFetch() {
-        Log.i(LOG_TAG, "WordCoachHiltApp:Scheduling daily word fetch")
+        Timber.tag(LOG_TAG).i("WordCoachHiltApp:Scheduling daily word fetch")
         WordOfTheDayWorker.scheduleInitialWork(this)
     }
 }
