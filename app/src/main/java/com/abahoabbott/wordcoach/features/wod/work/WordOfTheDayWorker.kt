@@ -1,45 +1,47 @@
 package com.abahoabbott.wordcoach.features.wod.work
 
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.hilt.work.HiltWorker
+import androidx.work.BackoffPolicy // Correct import
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.util.Calendar
-import java.util.TimeZone
+import java.time.Duration
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 /**
  * WordOfTheDayWorker handles the scheduled fetching of a new word each day.
  *
- * This worker is designed to run daily at a specific time (7:00 AM EAT) to fetch
- * the new Word of the Day. It utilizes both a precise one-time scheduling approach
- * and a backup periodic approach to ensure reliability.
+ * This worker is designed to run periodically, aiming for approximately 7:00 AM EAT daily,
+ * using WorkManager's periodic scheduling with an initial delay calculation.
  *
  * Features:
- * - Scheduled to run at 7:00 AM East Africa Time
- * - Requires network connectivity and non-low battery
- * - Implements retry logic with linear backoff
- * - Provides backup periodic scheduling for reliability
+ * - Scheduled to run around 7:00 AM East Africa Time daily.
+ * - Requires network connectivity and non-low battery.
+ * - Implements retry logic with linear backoff.
+ * - Uses a single, resilient PeriodicWorkRequest for scheduling.
  *
- * @property repository The repository responsible for fetching the word data
+ * @property repository The repository responsible for fetching the word data.
  */
 @HiltWorker
 class WordOfTheDayWorker @AssistedInject constructor(
     @Assisted ctx: Context,
     @Assisted params: WorkerParameters,
-    private val repository: WordOfTheDayRepository
+    private val repository: WordOfTheDayRepository // Assuming this repository exists and is injectable
 ) : CoroutineWorker(ctx, params) {
 
     /**
@@ -47,132 +49,97 @@ class WordOfTheDayWorker @AssistedInject constructor(
      *
      * This method runs on a background thread and attempts to fetch the
      * latest word of the day from the repository. It handles errors and
-     * determines whether to report success or schedule a retry.
+     * determines whether to report success or schedule a retry. The worker
+     * no longer needs to reschedule itself; WorkManager handles periodic runs.
      *
-     * @return Result indicating success, failure, or retry
+     * @return Result indicating success, failure, or retry.
      */
     override suspend fun doWork(): Result {
         return withContext(Dispatchers.IO) {
             try {
-                Timber.d("WordOfTheDayWorker: Starting work")
+                Timber.d("WordOfTheDayWorker [$id]: Starting work")
                 val result = repository.forceRefreshTodayWord()
+
                 if (result.isSuccess) {
-                    Timber.d("WordOfTheDayWorker: Successfully fetched word of the day")
-                    // Schedule the next day's fetch after successful completion
-                    scheduleNextDailyWork(applicationContext)
+                    Timber.d("WordOfTheDayWorker [$id]: Successfully fetched word of the day")
                     Result.success()
                 } else {
-                    Timber.w("WordOfTheDayWorker: Failed to fetch word, will retry")
-                    // Optionally capture the specific error for analysis
-                    val errorMessage = result.exceptionOrNull()?.message ?: "Unknown error"
-                    Timber.w("Error details: $errorMessage")
+                    val errorMessage = result.exceptionOrNull()?.message ?: "Unknown repository error"
+                    Timber.w("WordOfTheDayWorker [$id]: Failed to fetch word: $errorMessage. Will retry.")
                     Result.retry()
                 }
             } catch (e: Exception) {
-                Timber.e(e, "WordOfTheDayWorker: Exception occurred")
-                Result.retry()
+                Timber.e(e, "WordOfTheDayWorker [$id]: Exception occurred during work")
+                Result.retry() // Retry on unexpected exceptions
             }
         }
     }
 
     companion object {
-        /** Unique identifier for the main daily work request */
-        private const val WORK_NAME = "word_of_the_day_worker"
+        /** Unique identifier for the daily periodic work request. */
+        private const val WORK_NAME = "word_of_the_day_periodic_worker"
 
-        /** Unique identifier for the backup periodic work request */
-        private const val BACKUP_WORK_NAME = "word_of_the_day_backup_worker"
+        /** Time zone used for scheduling (East Africa Time). */
+        private const val TIME_ZONE = "Africa/Nairobi" // EAT Timezone ID
 
-        /** Time zone used for scheduling (East Africa Time) */
-        private const val TIME_ZONE = "Africa/Nairobi"
-
-        /** Hour of day (in 24-hour format) when the word should be fetched */
+        /** Hour of day (in 24-hour format) when the word should ideally be fetched. */
         private const val FETCH_HOUR = 7 // 7:00 AM
 
-        /** Delay between retry attempts in minutes */
+        /** Delay between retry attempts in minutes. */
         private const val BACKOFF_DELAY_MINUTES = 15L
 
         /**
-         * Initializes both the precise daily work and a backup periodic work.
+         * Schedules the daily periodic work request to fetch the word of the day.
          *
-         * This should be called during app startup, typically in the Application class
-         * or a startup service.
+         * This should be called once during app startup (e.g., in the Application class).
+         * It calculates the initial delay to target the next 7:00 AM EAT and then
+         * schedules the work to repeat approximately every 24 hours.
          *
-         * @param context Application context used to access WorkManager
+         * @param context Application context used to access WorkManager.
          */
-        fun scheduleInitialWork(context: Context) {
-            scheduleNextDailyWork(context)
-            scheduleBackupPeriodicWork(context)
-        }
-
-        /**
-         * Schedules a one-time work request for the next day at the specified time.
-         *
-         * This method calculates the time until the next scheduled run (7:00 AM EAT)
-         * and creates a precisely-timed work request.
-         *
-         * @param context Application context used to access WorkManager
-         */
-        fun scheduleNextDailyWork(context: Context) {
+        @RequiresApi(Build.VERSION_CODES.O)
+        fun scheduleDailyWordFetchWork(context: Context) {
+            val workManager = WorkManager.getInstance(context)
             val constraints = createWorkConstraints()
-            val delay = calculateInitialDelay()
+            val initialDelay = calculateInitialDelay()
 
-            val workRequest = OneTimeWorkRequestBuilder<WordOfTheDayWorker>()
-                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            Timber.d(
+                "Scheduling periodic word fetch work '$WORK_NAME' with initial delay: " +
+                        "${initialDelay / 1000 / 60} minutes (~${initialDelay / 1000 / 3600} hours)"
+            )
+
+            // Create a periodic work request
+            val periodicRequest = PeriodicWorkRequestBuilder<WordOfTheDayWorker>(
+                repeatInterval = 24, // Repeat every 24 hours
+                repeatIntervalTimeUnit = TimeUnit.HOURS
+                // Optional: Add flex time if some flexibility is acceptable/desirable
+                // .setFlexTimeInterval(15, TimeUnit.MINUTES)
+            )
+                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS) // Set the calculated delay for the first run
                 .setConstraints(constraints)
                 .addTag(WORK_NAME)
                 .setBackoffCriteria(
-                    androidx.work.BackoffPolicy.LINEAR,
+                    BackoffPolicy.LINEAR,
                     BACKOFF_DELAY_MINUTES,
                     TimeUnit.MINUTES
                 )
                 .build()
 
-            WorkManager.getInstance(context).enqueueUniqueWork(
+            // Enqueue the work uniquely, keeping the existing schedule if it's already running.
+            workManager.enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingWorkPolicy.REPLACE,
-                workRequest
-            )
-
-            Timber.d("Scheduled next word fetch in ${delay/1000/60} minutes")
-        }
-
-        /**
-         * Schedules a backup periodic work that runs daily to ensure updates aren't missed.
-         *
-         * This serves as a failsafe in case the one-time work fails to execute or
-         * fails to schedule its successor. The flexible execution window allows
-         * the system to optimize battery usage by batching operations.
-         *
-         * @param context Application context used to access WorkManager
-         */
-        private fun scheduleBackupPeriodicWork(context: Context) {
-            val constraints = createWorkConstraints()
-
-            val periodicRequest = PeriodicWorkRequestBuilder<WordOfTheDayWorker>(
-                24, TimeUnit.HOURS, // Repeat every 24 hours
-                2, TimeUnit.HOURS   // With flexibility window of 2 hours
-            )
-                .setConstraints(constraints)
-                .addTag(BACKUP_WORK_NAME)
-                .build()
-
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                BACKUP_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP, // Don't replace if already scheduled
+                ExistingPeriodicWorkPolicy.KEEP,
                 periodicRequest
             )
 
-            Timber.d("Scheduled backup daily word fetch")
+            Timber.d("Enqueued unique periodic work '$WORK_NAME'. Policy: KEEP.")
         }
 
         /**
-         * Creates common work constraints for both scheduling methods.
+         * Creates common work constraints for the scheduling.
+         * Requires network connectivity and battery not low.
          *
-         * Current constraints require:
-         * - Network connectivity
-         * - Battery not in low state
-         *
-         * @return Constraints for the work requests
+         * @return Constraints object for the WorkRequest.
          */
         private fun createWorkConstraints(): Constraints {
             return Constraints.Builder()
@@ -182,24 +149,40 @@ class WordOfTheDayWorker @AssistedInject constructor(
         }
 
         /**
-         * Calculates the delay in milliseconds until the next scheduled run time.
+         * Calculates the delay in milliseconds until the next scheduled run time (7:00 AM EAT)
+         * using the modern java.time API.
          *
-         * Calculates time until 7:00 AM East Africa Time. If current time is after
-         * today's scheduled time, it calculates for tomorrow.
+         * NOTE: Requires core library desugaring enabled in build.gradle if minSdk < 26.
          *
-         * @return Delay in milliseconds until next scheduled time
+         * @return Delay in milliseconds until the next 7:00 AM EAT.
          */
+        @RequiresApi(Build.VERSION_CODES.O)
         private fun calculateInitialDelay(): Long {
-            val now = Calendar.getInstance(TimeZone.getTimeZone(TIME_ZONE))
-            val scheduledTime = Calendar.getInstance(TimeZone.getTimeZone(TIME_ZONE)).apply {
-                set(Calendar.HOUR_OF_DAY, FETCH_HOUR)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-                // If current time is after scheduled time, schedule for tomorrow
-                if (before(now)) add(Calendar.DAY_OF_YEAR, 1)
+            return try {
+                val timeZone = ZoneId.of(TIME_ZONE)
+                val now = ZonedDateTime.now(timeZone)
+                val targetTime = LocalTime.of(FETCH_HOUR, 0) // 7:00 AM
+
+                // Get 7:00 AM for today in the specified timezone
+                var nextScheduledTime = now.with(targetTime)
+
+                // If 7:00 AM today has already passed, schedule for 7:00 AM tomorrow
+                if (now.isAfter(nextScheduledTime)) {
+                    nextScheduledTime = nextScheduledTime.plusDays(1)
+                }
+
+                // Calculate the duration between now and the next scheduled time
+                val delay = Duration.between(now, nextScheduledTime).toMillis()
+
+                Timber.d("Calculated initial delay: ${delay}ms. Current time: $now, Next run target: $nextScheduledTime")
+
+                // Ensure delay is not negative (shouldn't happen with correct logic, but safety check)
+                if (delay < 0) 0 else delay
+            } catch (e: Exception) {
+                // Fallback in case of ZoneId issues or other time calculation errors
+                Timber.e(e, "Error calculating initial delay using java.time. Scheduling for immediate run (or default WorkManager delay).")
+                0L // Default to a 0ms delay (run as soon as constraints are met)
             }
-            return scheduledTime.timeInMillis - now.timeInMillis
         }
     }
 }
