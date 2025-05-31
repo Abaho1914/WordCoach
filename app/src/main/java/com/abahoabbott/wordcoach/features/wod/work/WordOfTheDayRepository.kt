@@ -43,7 +43,7 @@ class WordOfTheDayRepository(
                 Result.success(existingWord.toDomainModel())
             } else {
                 // Insert the new word
-                wordsDao.insert(wordOfTheDay.toEntity())
+                wordsDao.upsert(wordOfTheDay.toEntity())
                 Timber.tag(LOG_TAG).i("New word fetched and saved to database")
                 Result.success(wordOfTheDay)
             }

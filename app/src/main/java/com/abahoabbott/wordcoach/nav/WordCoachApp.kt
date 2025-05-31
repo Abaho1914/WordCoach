@@ -17,6 +17,7 @@ import com.abahoabbott.wordcoach.features.splash.nav.splashDestination
 import com.abahoabbott.wordcoach.features.wod.nav.navigateToWoDScreen
 import com.abahoabbott.wordcoach.features.wod.nav.wordOfTheDayDestination
 import com.abahoabbott.wordcoach.ui.theme.WordCoachTheme
+import timber.log.Timber
 
 @Composable
 fun WordCoachApp() {
@@ -45,7 +46,7 @@ fun WordCoachApp() {
 
                 gameDestination(
                     onNavigateToResultsScreen = { gameResult ->
-                        Log.i("Sunflower:Nav", gameResult.toString())
+                        Timber.tag("Sunflower:Nav").i(gameResult.toString())
                         navController.navigateToResultsScreen(
                             gameResult
                         )

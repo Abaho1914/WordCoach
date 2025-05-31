@@ -28,15 +28,10 @@ class WordCoachHiltApp : Application(), Configuration.Provider {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
-        // Initialize Timber for logging (if you haven't already elsewhere)
-        if (BuildConfig.DEBUG) { // Example: Only plant debug tree in debug builds
+
+        if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
-
-        // WorkManager is initialized lazily when first needed, thanks to Configuration.Provider.
-        // No explicit WorkManager.initialize() call is needed here anymore.
-
-        // Schedule the daily work when the application starts
         scheduleDailyWordFetch()
     }
 
